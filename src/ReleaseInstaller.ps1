@@ -226,18 +226,59 @@ function Get-ReleaseYandexProfileInstallations {
 
     $result = @()
     foreach ($profile in @(Get-ChildItem -LiteralPath $UserDataRoot -Directory -Force -ErrorAction SilentlyContinue)) {
-        $extensionRoot = Join-Path (Join-Path $profile.FullName "Extensions") $ExtensionId
-        if (-not (Test-Path -LiteralPath $extensionRoot -PathType Container)) { continue }
+        $settingsEntry = $null
+        $settingsSource = ""
 
-        foreach ($versionDir in @(Get-ChildItem -LiteralPath $extensionRoot -Directory -Force -ErrorAction SilentlyContinue)) {
-            $version = [string]$versionDir.Name
-            if ($version -notmatch '^(\d+(?:\.\d+){0,3})(?:_\d+)?$') { continue }
+        foreach ($preferencesName in @("Secure Preferences", "Preferences")) {
+            $preferencesPath = Join-Path $profile.FullName $preferencesName
+            if (-not (Test-Path -LiteralPath $preferencesPath -PathType Leaf)) { continue }
 
-            $result += [pscustomobject]@{
-                Profile = [string]$profile.Name
-                Version = [string]$Matches[1]
-                Path = [string]$versionDir.FullName
+            try {
+                $preferences = [System.IO.File]::ReadAllText($preferencesPath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json -ErrorAction Stop
+                $extensions = Get-ReleaseProperty $preferences "extensions" $null
+                $settings = Get-ReleaseProperty $extensions "settings" $null
+                $candidate = Get-ReleaseProperty $settings $ExtensionId $null
+                if ($null -ne $candidate) {
+                    $settingsEntry = $candidate
+                    $settingsSource = $preferencesPath
+                    break
+                }
             }
+            catch {
+                # A transient/unreadable profile must not break normal status probing.
+            }
+        }
+
+        if ($null -eq $settingsEntry) { continue }
+
+        $version = ""
+        $manifest = Get-ReleaseProperty $settingsEntry "manifest" $null
+        if ($null -ne $manifest) {
+            $version = [string](Get-ReleaseProperty $manifest "version" "")
+        }
+
+        $extensionRoot = Join-Path (Join-Path $profile.FullName "Extensions") $ExtensionId
+        $path = ""
+        if (Test-Path -LiteralPath $extensionRoot -PathType Container) {
+            $versionDirs = @(Get-ChildItem -LiteralPath $extensionRoot -Directory -Force -ErrorAction SilentlyContinue)
+            if ([string]::IsNullOrWhiteSpace($version)) {
+                $best = @($versionDirs | Where-Object { $_.Name -match '^(\d+(?:\.\d+){0,3})(?:_\d+)?$' } | Sort-Object Name -Descending | Select-Object -First 1)
+                if ($best.Count -eq 1 -and [string]$best[0].Name -match '^(\d+(?:\.\d+){0,3})(?:_\d+)?$') {
+                    $version = [string]$Matches[1]
+                    $path = [string]$best[0].FullName
+                }
+            }
+            else {
+                $matching = @($versionDirs | Where-Object { $_.Name -match ('^' + [regex]::Escape($version) + '(?:_\d+)?$') } | Select-Object -First 1)
+                if ($matching.Count -eq 1) { $path = [string]$matching[0].FullName }
+            }
+        }
+
+        $result += [pscustomobject]@{
+            Profile = [string]$profile.Name
+            Version = $version
+            Path = $path
+            PreferencesPath = $settingsSource
         }
     }
     return @($result)
@@ -256,22 +297,25 @@ function Get-ReleaseYandexExternalUninstallProfiles {
 
     $result = @()
     foreach ($profile in @(Get-ChildItem -LiteralPath $UserDataRoot -Directory -Force -ErrorAction SilentlyContinue)) {
-        $preferencesPath = Join-Path $profile.FullName "Preferences"
-        if (-not (Test-Path -LiteralPath $preferencesPath -PathType Leaf)) { continue }
+        foreach ($preferencesName in @("Secure Preferences", "Preferences")) {
+            $preferencesPath = Join-Path $profile.FullName $preferencesName
+            if (-not (Test-Path -LiteralPath $preferencesPath -PathType Leaf)) { continue }
 
-        try {
-            $preferences = [System.IO.File]::ReadAllText($preferencesPath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json -ErrorAction Stop
-            $extensions = Get-ReleaseProperty $preferences "extensions" $null
-            $externalUninstalls = @(Get-ReleaseProperty $extensions "external_uninstalls" $null)
-            if (@($externalUninstalls | Where-Object { [string]$_ -ceq $ExtensionId }).Count -gt 0) {
-                $result += [pscustomobject]@{
-                    Profile = [string]$profile.Name
-                    PreferencesPath = [string]$preferencesPath
+            try {
+                $preferences = [System.IO.File]::ReadAllText($preferencesPath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json -ErrorAction Stop
+                $extensions = Get-ReleaseProperty $preferences "extensions" $null
+                $externalUninstalls = @(Get-ReleaseProperty $extensions "external_uninstalls" $null)
+                if (@($externalUninstalls | Where-Object { [string]$_ -ceq $ExtensionId }).Count -gt 0) {
+                    $result += [pscustomobject]@{
+                        Profile = [string]$profile.Name
+                        PreferencesPath = [string]$preferencesPath
+                    }
+                    break
                 }
             }
-        }
-        catch {
-            # A transient/unreadable profile must not break normal status probing.
+            catch {
+                # A transient/unreadable profile must not break normal status probing.
+            }
         }
     }
     return @($result)
@@ -384,6 +428,65 @@ function Remove-ReleaseYandexExternalUninstallMarker {
     return @($backups)
 }
 
+function Set-ReleaseYandexRegistrationFresh {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionId,
+        [Parameter(Mandatory = $true)]
+        [string]$CrxPath,
+        [Parameter(Mandatory = $true)]
+        [string]$Version,
+        [string]$BaseKey = "HKCU:\Software\Yandex\YandexBrowser\Extensions",
+        [Nullable[bool]]$BrowserRunningOverride = $null,
+        [int]$PulseDelayMilliseconds = 1200
+    )
+
+    if (-not (Test-ReleaseExtensionId $ExtensionId)) { throw "Некорректный Extension ID." }
+    if (-not (Test-Path -LiteralPath $CrxPath -PathType Leaf)) { throw "CRX для регистрации не найден." }
+    if ($Version -notmatch '^\d+(\.\d+){0,3}$') { throw "Некорректная версия для регистрации." }
+    if ($PulseDelayMilliseconds -lt 0 -or $PulseDelayMilliseconds -gt 10000) { throw "Некорректная задержка перерегистрации." }
+
+    if (-not (Test-Path -LiteralPath $BaseKey)) {
+        New-Item -Path $BaseKey -Force | Out-Null
+    }
+
+    $key = Join-Path $BaseKey $ExtensionId
+    $hadRegistration = Test-Path -LiteralPath $key
+    $browserRunning = if ($null -ne $BrowserRunningOverride) {
+        [bool]$BrowserRunningOverride
+    }
+    else {
+        Test-ReleaseYandexBrowserRunning
+    }
+
+    if ($hadRegistration) {
+        Remove-Item -LiteralPath $key -Recurse -Force -ErrorAction Stop
+
+        # Chromium/Yandex watches the parent Extensions registry key. A short two-phase
+        # remove/recreate pulse makes an already-running browser observe a genuinely new
+        # external registration instead of only seeing values replaced under an old key.
+        if ($browserRunning -and $PulseDelayMilliseconds -gt 0) {
+            Start-Sleep -Milliseconds $PulseDelayMilliseconds
+        }
+    }
+
+    New-Item -Path $key -Force | Out-Null
+    New-ItemProperty -LiteralPath $key -Name "path" -PropertyType String -Value $CrxPath -Force | Out-Null
+    New-ItemProperty -LiteralPath $key -Name "version" -PropertyType String -Value $Version -Force | Out-Null
+
+    $value = Get-ItemProperty -LiteralPath $key -ErrorAction Stop
+    if ([string]$value.path -cne $CrxPath -or [string]$value.version -cne $Version) {
+        throw "Проверка записи Яндекс.Браузера после перерегистрации не пройдена."
+    }
+
+    return [pscustomobject]@{
+        Key = $key
+        HadRegistration = [bool]$hadRegistration
+        BrowserRunning = [bool]$browserRunning
+        Pulsed = [bool]($hadRegistration -and $browserRunning)
+    }
+}
+
 function Test-ReleaseLegacyYandexRegistration {
     param(
         $YandexValues,
@@ -491,12 +594,17 @@ function Install-ValidatedSignedRelease($ResolvedRelease, [string]$InstallRoot) 
     }
 
     $preferenceBackups = @()
+    $browserRunning = Test-ReleaseYandexBrowserRunning
     try {
-        $preferenceBackups = @(Remove-ReleaseYandexExternalUninstallMarker $extensionId)
+        # When Yandex is closed we can safely clear a persisted user-uninstall marker
+        # before the next browser start. When it is running, never edit Preferences
+        # behind its back: the fresh registry registration below is delivered through
+        # Chromium's live external-registry watcher and the browser owns its prefs.
+        if (-not $browserRunning) {
+            $preferenceBackups = @(Remove-ReleaseYandexExternalUninstallMarker $extensionId)
+        }
 
-        New-Item -Path $yandexKey -Force | Out-Null
-        New-ItemProperty -LiteralPath $yandexKey -Name "path" -PropertyType String -Value $installedCrxPath -Force | Out-Null
-        New-ItemProperty -LiteralPath $yandexKey -Name "version" -PropertyType String -Value $version -Force | Out-Null
+        $registration = Set-ReleaseYandexRegistrationFresh -ExtensionId $extensionId -CrxPath $installedCrxPath -Version $version -BrowserRunningOverride $browserRunning
 
         $verify = Get-ReleaseYandexValues $extensionId
         if ($null -eq $verify -or $verify.Path -cne $installedCrxPath -or $verify.Version -cne $version) {
@@ -555,6 +663,8 @@ function Install-ValidatedSignedRelease($ResolvedRelease, [string]$InstallRoot) 
         CrxPath = $installedCrxPath
         Sha256 = $sha
         MigratedLegacyRegistration = $legacyRegistration
+        BrowserWasRunning = [bool]$browserRunning
+        RegistrationPulsed = [bool](Get-ReleaseProperty $registration "Pulsed" $false)
     }
 }
 
