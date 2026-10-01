@@ -74,7 +74,16 @@ The existing GUI and normal v3.0.2 install button still invoke the legacy local 
 
 ## B11 — canonical extension name
 
-The extension previously referred to as `EINV Network Recorder` is now canonically named **Network Recorder**. New repository names, release metadata, catalog entries, UI text and documentation must use only `Network Recorder`, except where historical evidence must preserve an old literal filename or label.
+The first browser extension in this ecosystem is canonically named **Network Recorder**. Repository names, release metadata, catalog entries, UI text and new documentation must use `Network Recorder`.
 
 - source: owner directive
 - authority: owner-directive
+
+
+
+## B12 — installable packaging
+
+ExtensionInstaller has a verified per-user Inno Setup packaging path with a fixed AppId. Windows CI verified install, reinstall over the existing installation, payload presence and uninstall. Preview `3.0.2-preview.3` is published directly as a GitHub prerelease asset with SHA-256 `e69d4db6dc0ac55124e46dbd301d13ffb0504d8bb1b14d3955586c56073e37bd`.
+
+- source: verified repository + successful Windows GitHub Actions run 36897779451
+- authority: verified-repository + verified-ci
