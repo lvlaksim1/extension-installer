@@ -88,11 +88,11 @@ Interactive uninstall asks whether to remove `%LOCALAPPDATA%\ExtensionInstaller`
 
 ## B13 — current verified preview
 
-The current verified clean installer preview is `4.0.0-preview.14`, tag `installer-preview-14`, SHA-256 `898bef8f3f0ca6cf6c3fe26841ac5e529b663b434f5460aec454f9ccb5498ad0`.
+The current verified clean installer preview is `4.0.0-preview.16`, tag `installer-preview-16`, SHA-256 `d45731e08cd543b131ea19940bfa8110698ddefdd0cc3ee222597edd359f7fed`.
 
-It supersedes preview.11 as the owner-test candidate because preview.11 exposed a real migration/state-detection defect.
+It supersedes preview.14 as the owner-test candidate because preview.16 additionally treats the Yandex `external_uninstalls` marker as authoritative over stale profile extension directories.
 
-- source: owner runtime evidence + GitHub Release + successful Windows validation/build runs `36938821186` and `36938882816`
+- source: owner runtime evidence + GitHub Release + successful Windows validation/build runs `36938925514` and `36938989331`
 - authority: owner-runtime-evidence + verified-ci + verified-repository
 
 ## B14 — current release gate
