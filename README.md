@@ -1,59 +1,76 @@
-# extension-installer
+# ExtensionInstaller
 
-Windows installer and updater for locally managed Chromium-based browser extensions, currently focused on Yandex Browser.
+Windows application for installing, updating and removing approved Chromium-based browser extensions, currently focused on Yandex Browser.
 
-## Baseline
+## Product model
 
-The repository starts from the retained local **ExtensionInstaller v3.0.2** baseline.
+ExtensionInstaller has one installation path only:
 
-- canonical working source: `src/ExtensionInstaller.cmd`
-- original retained file SHA-256 before import: `100193a70aa77f0a06fb76d84a4deb28c6447ad930a6fb36e1a2159600a0375a`
-- baseline behavior: discovers extension ZIP packages, manages stable extension IDs via RSA signing keys, builds CRX3 packages and registers them in Yandex Browser.
+`catalog/extensions.json` → selected extension repository → signed GitHub Release → `extension-release.json` → CRX3 verification → installer-owned local CRX → Yandex Browser registration.
 
-The imported baseline is the starting point. Its local-key behavior is legacy behavior to be migrated, not the target architecture.
+There is no local extension-source folder, no ZIP selector, no local extension build step and no private RSA key on the user's computer.
 
-## Target ecosystem
+## Trust model
 
-Each extension lives in its own repository. Extension repositories own their source, versioning, release process and signing secret. Private RSA signing material must be stored in GitHub Actions secrets and must never be committed to Git.
+Each catalog entry pins:
 
-The installer repository contains only the installer/update manager. The target installer downloads already signed CRX releases and verifies their metadata/checksums before installation.
+- extension slug and display name;
+- GitHub repository;
+- expected Extension ID;
+- release channel.
 
-## Repository policy
+Before installation or update, ExtensionInstaller verifies:
 
-- No RSA private keys in Git.
-- No ZIP/CRX build products in repository history.
-- Release binaries belong in GitHub Releases, not Actions artifacts or normal commits.
-- Temporary CI outputs must not be retained unless required for a release.
-- Extension source code belongs in the corresponding extension repository, not here.
+1. release descriptor schema and metadata;
+2. descriptor Extension ID against the pinned catalog ID;
+3. CRX SHA-256;
+4. CRX3 RSA/SHA-256 signature;
+5. Extension ID derived from the CRX public key.
 
-## Current phase
+Only a CRX that passes all checks may be registered.
 
-1. Preserve and document the v3.0.2 baseline.
-2. Separate signing/build responsibilities from local installation.
-3. Define the extension catalog/release contract.
-4. Adapt ExtensionInstaller to consume signed releases.
-5. Migrate existing extensions one by one without changing stable extension IDs.
+## Current catalog
 
+- **Network Recorder**
+  - repository: `lvlaksim1/network-recorder`
+  - Extension ID: `paolfcaakecapidipfcfbbhgkpcmgcip`
+  - current integration channel: `prerelease`
+
+The prerelease channel is temporary for end-to-end installation testing. Switching a catalog entry to `stable` requires no GUI changes.
+
+## Local layout
+
+Program files:
+
+`%LOCALAPPDATA%\Programs\ExtensionInstaller`
+
+Application data:
+
+`%LOCALAPPDATA%\ExtensionInstaller`
+
+Managed extension CRX/state:
+
+`%LOCALAPPDATA%\ExtensionInstaller\extensions\<extension-id>`
+
+Logs:
+
+`%LOCALAPPDATA%\ExtensionInstaller\logs`
 
 ## Windows installation
 
-ExtensionInstaller is packaged as a per-user Windows installer using Inno Setup.
+The application is packaged with Inno Setup as a per-user installer.
 
-- fixed AppId: subsequent installer versions update the existing installation in place;
-- install path: `%LOCALAPPDATA%\Programs\ExtensionInstaller`;
-- no administrator rights are required for the default installation;
-- Start Menu shortcut is created; desktop shortcut is optional;
-- application/runtime state under `%LOCALAPPDATA%\ExtensionInstaller` is separate from installed program files;
-- distributable setup EXEs are published directly in GitHub Releases;
-- GitHub Actions artifacts are not used for installer distribution.
+- fixed AppId for in-place updates;
+- no administrator rights required by default;
+- Start Menu shortcut;
+- optional desktop shortcut;
+- setup EXE is published directly in GitHub Releases;
+- no GitHub Actions artifacts are retained for distribution.
 
-The current installable build is a prerelease while the GUI is still being migrated from the legacy local ZIP/RSA workflow to the signed-release workflow.
+During interactive uninstall, Windows asks whether application data should also be removed. Declining preserves settings, extension state and logs; confirming removes `%LOCALAPPDATA%\ExtensionInstaller`.
 
+## Extension release ownership
 
-## Uninstall data policy
+Extension repositories own their source, signing workflow and release assets. Private signing keys live only in GitHub secret scope. ExtensionInstaller never receives or stores those keys.
 
-During interactive uninstall, ExtensionInstaller asks whether to remove its working data as well.
-
-- **No**: removes the installed program under `%LOCALAPPDATA%\Programs\ExtensionInstaller` but preserves `%LOCALAPPDATA%\ExtensionInstaller`.
-- **Yes**: also removes `%LOCALAPPDATA%\ExtensionInstaller`, including settings and logs.
-- Silent uninstall preserves working data by default.
+See `docs/EXTENSION_RELEASE_CONTRACT.md` for the release contract.
