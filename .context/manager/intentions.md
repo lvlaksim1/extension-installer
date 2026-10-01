@@ -1,7 +1,22 @@
 # Manager intentions and commitments
 
-Record commitments using the Contract lifecycle:
+## EI-PM-001 — establish ExtensionInstaller repository baseline
+- status: completed
+- source: owner directive
+- result: public repository created through repo-factory, Project Manager v2 installed, v3.0.2 imported, repository hygiene added.
+- verification: repository state on `main`.
 
-`proposed → accepted/active → completed | cancelled | invalidated | superseded`
+## EI-PM-002 — migrate installer architecture to signed-release consumption
+- status: accepted/active
+- source: owner directive and approved architecture
+- commitment: document the existing v3.0.2 responsibilities, define the release contract, then modify the installer so normal installation/update does not require local RSA private keys.
 
-Only accepted/active items are continuing manager responsibility. Record the verification basis for completion and the reason for cancellation, invalidation, or supersession when significant. An explicit statement that there are no active commitments is valid state once verified.
+## EI-PM-003 — preserve security and storage invariants
+- status: accepted/active
+- source: owner directive
+- commitment: prevent private signing material from entering Git/durable context, preserve stable extension IDs, and avoid unnecessary build artifacts.
+
+## EI-PM-004 — prepare first real ecosystem integration
+- status: accepted/active
+- source: owner directive
+- commitment: after the installer contract is defined, integrate EINV Network Recorder as the first separately managed extension without silently changing its stable identity or chosen stable code baseline.
