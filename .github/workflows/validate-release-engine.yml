@@ -89,7 +89,11 @@ jobs:
           if ([string]$pulseValues.path -cne $registryTestCrx -or [string]$pulseValues.version -cne '1.6.0') {
             throw 'Live registry re-registration pulse wrote incorrect values.'
           }
-          Remove-Item -LiteralPath ($registryTestRoot -replace '\\Extensions Join-Path (Join-Path (Join-Path (Join-Path $env:LOCALAPPDATA 'UniversalExtensionBuilder') 'projects') $testId) 'crx'
+          $registryTestParent = Split-Path -Parent $registryTestRoot
+          Remove-Item -LiteralPath $registryTestParent -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item -LiteralPath $registryTestCrx -Force -ErrorAction SilentlyContinue
+
+          $legacyPath = Join-Path (Join-Path (Join-Path (Join-Path $env:LOCALAPPDATA 'UniversalExtensionBuilder') 'projects') $testId) 'crx'
           $legacyProbe = [pscustomobject]@{ Path = (Join-Path $legacyPath 'legacy.crx'); Version = '1.6.0' }
           if (-not (Test-ReleaseLegacyYandexRegistration $legacyProbe $testId)) {
             throw 'Legacy ExtensionInstaller registration was not recognized.'
