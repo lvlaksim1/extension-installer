@@ -208,56 +208,79 @@ function Get-ReleaseYandexValues([string]$ExtensionId) {
     }
 }
 
+
 function Get-ReleaseYandexUserDataRoot {
     return (Join-Path $env:LOCALAPPDATA "Yandex\YandexBrowser\User Data")
 }
 
 function Get-ReleaseYandexProfileInstallations {
-    param([string]$ExtensionId, [string]$UserDataRoot = "")
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionId,
+        [string]$UserDataRoot = ""
+    )
+
     if (-not (Test-ReleaseExtensionId $ExtensionId)) { throw "Некорректный Extension ID." }
     if ([string]::IsNullOrWhiteSpace($UserDataRoot)) { $UserDataRoot = Get-ReleaseYandexUserDataRoot }
     if (-not (Test-Path -LiteralPath $UserDataRoot -PathType Container)) { return @() }
 
     $result = @()
     foreach ($profile in @(Get-ChildItem -LiteralPath $UserDataRoot -Directory -Force -ErrorAction SilentlyContinue)) {
-        $root = Join-Path (Join-Path $profile.FullName "Extensions") $ExtensionId
-        if (-not (Test-Path -LiteralPath $root -PathType Container)) { continue }
-        foreach ($dir in @(Get-ChildItem -LiteralPath $root -Directory -Force -ErrorAction SilentlyContinue)) {
-            $name = [string]$dir.Name
-            if ($name -notmatch '^(\d+(?:\.\d+){0,3})(?:_\d+)?$') { continue }
-            $result += [pscustomobject]@{ Profile = [string]$profile.Name; Version = [string]$Matches[1]; Path = [string]$dir.FullName }
+        $extensionRoot = Join-Path (Join-Path $profile.FullName "Extensions") $ExtensionId
+        if (-not (Test-Path -LiteralPath $extensionRoot -PathType Container)) { continue }
+
+        foreach ($versionDir in @(Get-ChildItem -LiteralPath $extensionRoot -Directory -Force -ErrorAction SilentlyContinue)) {
+            $version = [string]$versionDir.Name
+            if ($version -notmatch '^(\d+(?:\.\d+){0,3})(?:_\d+)?$') { continue }
+
+            $result += [pscustomobject]@{
+                Profile = [string]$profile.Name
+                Version = [string]$Matches[1]
+                Path = [string]$versionDir.FullName
+            }
         }
     }
     return @($result)
 }
 
 function Get-ReleaseYandexExternalUninstallProfiles {
-    param([string]$ExtensionId, [string]$UserDataRoot = "")
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionId,
+        [string]$UserDataRoot = ""
+    )
+
     if (-not (Test-ReleaseExtensionId $ExtensionId)) { throw "Некорректный Extension ID." }
     if ([string]::IsNullOrWhiteSpace($UserDataRoot)) { $UserDataRoot = Get-ReleaseYandexUserDataRoot }
     if (-not (Test-Path -LiteralPath $UserDataRoot -PathType Container)) { return @() }
 
     $result = @()
     foreach ($profile in @(Get-ChildItem -LiteralPath $UserDataRoot -Directory -Force -ErrorAction SilentlyContinue)) {
-        $path = Join-Path $profile.FullName "Preferences"
-        if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { continue }
+        $preferencesPath = Join-Path $profile.FullName "Preferences"
+        if (-not (Test-Path -LiteralPath $preferencesPath -PathType Leaf)) { continue }
+
         try {
-            $prefs = [System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8) | ConvertFrom-Json -ErrorAction Stop
-            $extensions = Get-ReleaseProperty $prefs "extensions" $null
-            $items = @(Get-ReleaseProperty $extensions "external_uninstalls" $null)
-            if (@($items | Where-Object { [string]$_ -ceq $ExtensionId }).Count -gt 0) {
-                $result += [pscustomobject]@{ Profile = [string]$profile.Name; PreferencesPath = $path }
+            $preferences = [System.IO.File]::ReadAllText($preferencesPath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json -ErrorAction Stop
+            $extensions = Get-ReleaseProperty $preferences "extensions" $null
+            $externalUninstalls = @(Get-ReleaseProperty $extensions "external_uninstalls" $null)
+            if (@($externalUninstalls | Where-Object { [string]$_ -ceq $ExtensionId }).Count -gt 0) {
+                $result += [pscustomobject]@{
+                    Profile = [string]$profile.Name
+                    PreferencesPath = [string]$preferencesPath
+                }
             }
         }
-        catch { }
+        catch {
+            # A transient/unreadable profile must not break normal status probing.
+        }
     }
     return @($result)
 }
 
 function Test-ReleaseYandexBrowserRunning {
-    foreach ($p in @(Get-Process -Name "browser" -ErrorAction SilentlyContinue)) {
+    foreach ($process in @(Get-Process -Name "browser" -ErrorAction SilentlyContinue)) {
         try {
-            $path = [string]$p.Path
+            $path = [string]$process.Path
             if ([string]::IsNullOrWhiteSpace($path)) { return $true }
             if ($path.IndexOf("\Yandex\YandexBrowser\", [System.StringComparison]::OrdinalIgnoreCase) -ge 0) { return $true }
         }
@@ -267,18 +290,34 @@ function Test-ReleaseYandexBrowserRunning {
 }
 
 function Restore-ReleaseYandexPreferenceBackups($Backups) {
-    foreach ($b in @($Backups)) {
-        $path = [string](Get-ReleaseProperty $b "Path" "")
-        $bytes = Get-ReleaseProperty $b "Bytes" $null
+    foreach ($backup in @($Backups)) {
+        $path = [string](Get-ReleaseProperty $backup "Path" "")
+        $bytes = Get-ReleaseProperty $backup "Bytes" $null
         if ([string]::IsNullOrWhiteSpace($path) -or $null -eq $bytes) { continue }
-        [System.IO.File]::WriteAllBytes($path, [byte[]]$bytes)
+
+        $temp = $path + ".extensioninstaller-restore-" + [Guid]::NewGuid().ToString("N")
+        try {
+            [System.IO.File]::WriteAllBytes($temp, [byte[]]$bytes)
+            Move-Item -LiteralPath $temp -Destination $path -Force
+        }
+        finally {
+            if (Test-Path -LiteralPath $temp -PathType Leaf) {
+                Remove-Item -LiteralPath $temp -Force -ErrorAction SilentlyContinue
+            }
+        }
     }
 }
 
 function Remove-ReleaseYandexExternalUninstallMarker {
-    param([string]$ExtensionId, [string]$UserDataRoot = "")
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionId,
+        [string]$UserDataRoot = ""
+    )
+
     $profiles = @(Get-ReleaseYandexExternalUninstallProfiles $ExtensionId $UserDataRoot)
     if ($profiles.Count -eq 0) { return @() }
+
     if (Test-ReleaseYandexBrowserRunning) {
         throw "Расширение было удалено через Яндекс.Браузер. Полностью закройте Яндекс.Браузер и повторите установку."
     }
@@ -286,41 +325,76 @@ function Remove-ReleaseYandexExternalUninstallMarker {
     $backups = @()
     try {
         foreach ($profile in $profiles) {
-            $path = [string]$profile.PreferencesPath
-            $bytes = [System.IO.File]::ReadAllBytes($path)
-            $textValue = [System.Text.Encoding]::UTF8.GetString($bytes)
-            if ($textValue.Length -gt 0 -and [int]$textValue[0] -eq 0xFEFF) { $textValue = $textValue.Substring(1) }
+            $preferencesPath = [string]$profile.PreferencesPath
+            $originalBytes = [System.IO.File]::ReadAllBytes($preferencesPath)
+            $hasBom = (
+                $originalBytes.Length -ge 3 -and
+                $originalBytes[0] -eq 0xEF -and
+                $originalBytes[1] -eq 0xBB -and
+                $originalBytes[2] -eq 0xBF
+            )
+            $text = [System.Text.Encoding]::UTF8.GetString($originalBytes)
+            if ($text.Length -gt 0 -and [int]$text[0] -eq 0xFEFF) { $text = $text.Substring(1) }
 
-            $m = [regex]::Match($textValue, '"external_uninstalls"\s*:\s*\[(?<body>[^\]]*)\]')
-            if (-not $m.Success) { throw ("Не найдена блокировка повторной установки в профиле " + [string]$profile.Profile + ".") }
+            $arrayPattern = '("external_uninstalls"\s*:\s*)\[(?<body>[^\]]*)\]'
+            $matches = [regex]::Matches($text, $arrayPattern)
+            $newText = $text
+            $changed = $false
+            $idPattern = [regex]::Escape($ExtensionId)
 
-            $oldBody = [string]$m.Groups["body"].Value
-            $wanted = '"' + $ExtensionId + '"'
-            $parts = @($oldBody -split ',')
-            $kept = @($parts | Where-Object { $_.Trim() -cne $wanted })
-            if ($kept.Count -eq $parts.Count) { throw ("Не найдена блокировка Extension ID в профиле " + [string]$profile.Profile + ".") }
+            for ($i = $matches.Count - 1; $i -ge 0; $i--) {
+                $match = $matches[$i]
+                $bodyGroup = $match.Groups["body"]
+                $body = [string]$bodyGroup.Value
+                if ($body -notmatch ('"' + $idPattern + '"')) { continue }
 
-            $newBody = $kept -join ','
-            $left = $m.Value.Substring(0, $m.Value.IndexOf('[') + 1)
-            $replacement = $left + $newBody + ']'
-            $newText = $textValue.Substring(0, $m.Index) + $replacement + $textValue.Substring($m.Index + $m.Length)
+                $items = @([regex]::Matches($body, '"(?<id>[a-p]{32})"') | ForEach-Object { [string]$_.Groups["id"].Value })
+                $filtered = @($items | Where-Object { $_ -cne $ExtensionId })
+                if ($filtered.Count -eq $items.Count) { continue }
 
-            $backups += [pscustomobject]@{ Path = $path; Bytes = $bytes }
-            $utf8 = New-Object System.Text.UTF8Encoding($false)
-            [System.IO.File]::WriteAllText($path, $newText, $utf8)
+                $newBody = (($filtered | ForEach-Object { '"' + $_ + '"' }) -join ',')
+                $newText = $newText.Substring(0, $bodyGroup.Index) + $newBody + $newText.Substring($bodyGroup.Index + $bodyGroup.Length)
+                $changed = $true
+            }
+
+            if (-not $changed) {
+                throw ("Не удалось снять блокировку повторной установки в профиле " + [string]$profile.Profile + ".")
+            }
+
+            $backups += [pscustomobject]@{ Path = $preferencesPath; Bytes = $originalBytes }
+
+            $temp = $preferencesPath + ".extensioninstaller-" + [Guid]::NewGuid().ToString("N")
+            try {
+                $encoding = New-Object System.Text.UTF8Encoding($hasBom)
+                [System.IO.File]::WriteAllText($temp, $newText, $encoding)
+                Move-Item -LiteralPath $temp -Destination $preferencesPath -Force
+            }
+            finally {
+                if (Test-Path -LiteralPath $temp -PathType Leaf) {
+                    Remove-Item -LiteralPath $temp -Force -ErrorAction SilentlyContinue
+                }
+            }
         }
     }
     catch {
         Restore-ReleaseYandexPreferenceBackups $backups
         throw
     }
+
     return @($backups)
 }
 
-function Test-ReleaseLegacyYandexRegistration($YandexValues, [string]$ExtensionId) {
+function Test-ReleaseLegacyYandexRegistration {
+    param(
+        $YandexValues,
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionId
+    )
+
     if ($null -eq $YandexValues -or -not (Test-ReleaseExtensionId $ExtensionId)) { return $false }
-    $legacy = Join-Path (Join-Path (Join-Path (Join-Path $env:LOCALAPPDATA "UniversalExtensionBuilder") "projects") $ExtensionId) "crx"
-    return (Test-PathUnderRoot ([string]$YandexValues.Path) $legacy)
+    $legacyRoot = Join-Path (Join-Path (Join-Path $env:LOCALAPPDATA "UniversalExtensionBuilder") "projects") $ExtensionId
+    $legacyCrxRoot = Join-Path $legacyRoot "crx"
+    return (Test-PathUnderRoot ([string]$YandexValues.Path) $legacyCrxRoot)
 }
 
 function Read-ReleaseInstallState([string]$StatePath) {
@@ -419,6 +493,7 @@ function Install-ValidatedSignedRelease($ResolvedRelease, [string]$InstallRoot) 
     $preferenceBackups = @()
     try {
         $preferenceBackups = @(Remove-ReleaseYandexExternalUninstallMarker $extensionId)
+
         New-Item -Path $yandexKey -Force | Out-Null
         New-ItemProperty -LiteralPath $yandexKey -Name "path" -PropertyType String -Value $installedCrxPath -Force | Out-Null
         New-ItemProperty -LiteralPath $yandexKey -Name "version" -PropertyType String -Value $version -Force | Out-Null
@@ -458,6 +533,7 @@ function Install-ValidatedSignedRelease($ResolvedRelease, [string]$InstallRoot) 
         if ($preferenceBackups.Count -gt 0) {
             try { Restore-ReleaseYandexPreferenceBackups $preferenceBackups } catch { }
         }
+
         if ($null -ne $oldYandex) {
             New-Item -Path $oldYandex.Key -Force | Out-Null
             New-ItemProperty -LiteralPath $oldYandex.Key -Name "path" -PropertyType String -Value $oldYandex.Path -Force | Out-Null
