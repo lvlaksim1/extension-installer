@@ -70,3 +70,11 @@ The existing GUI and normal v3.0.2 install button still invoke the legacy local 
 
 - source: verified repository
 - authority: verified-repository
+
+
+## B11 — canonical extension name
+
+The extension previously referred to as `EINV Network Recorder` is now canonically named **Network Recorder**. New repository names, release metadata, catalog entries, UI text and documentation must use only `Network Recorder`, except where historical evidence must preserve an old literal filename or label.
+
+- source: owner directive
+- authority: owner-directive
