@@ -235,8 +235,14 @@ function Update-UiFromState {
     }
 
     if (-not $snapshot.BrowserInstalled -and $snapshot.Managed -and $snapshot.HasRegistry) {
-        Set-StatusText "Зарегистрировано; запустите или перезапустите Яндекс.Браузер" "Warn"
-        $script:InstallButton.Text = "Переустановить"
+        if (Test-ReleaseYandexBrowserRunning) {
+            Set-StatusText "Зарегистрировано; можно применить в открытом Яндекс.Браузере без перезапуска" "Warn"
+            $script:InstallButton.Text = "Применить в браузере"
+        }
+        else {
+            Set-StatusText "Зарегистрировано; будет применено при следующем запуске Яндекс.Браузера" "Warn"
+            $script:InstallButton.Text = "Переустановить"
+        }
         $script:InstallButton.Enabled = ($null -ne $script:ResolvedRelease)
         $script:UninstallButton.Enabled = $true
         return
@@ -310,13 +316,51 @@ function Install-SelectedExtension {
             $script:ResolvedRelease = Resolve-LatestSignedExtensionRelease $entry $script:DownloadRoot
         }
 
+        $before = Get-InstallSnapshot $entry
         $name = [string](Get-ReleaseProperty $entry "name" "")
         Write-AppLog ("Установка: " + $name + " " + [string]$script:ResolvedRelease.Version)
         $result = Install-ValidatedSignedRelease $script:ResolvedRelease $script:InstallRoot
 
-        Write-AppLog ("Установка завершена: id=" + $result.ExtensionId + "; version=" + $result.Version + "; browser_running=" + [bool](Get-ReleaseProperty $result "BrowserWasRunning" $false) + "; registry_pulsed=" + [bool](Get-ReleaseProperty $result "RegistrationPulsed" $false))
+        $browserRunning = [bool](Get-ReleaseProperty $result "BrowserWasRunning" $false)
+        $wasRemovedByUser = [bool](Get-ReleaseProperty $before "RemovedByUser" $false)
+        Write-AppLog ("Установка подготовлена: id=" + $result.ExtensionId + "; version=" + $result.Version + "; browser_running=" + $browserRunning + "; removed_by_user=" + $wasRemovedByUser + "; registry_pulsed=" + [bool](Get-ReleaseProperty $result "RegistrationPulsed" $false))
+
+        $message = ""
+        if ($browserRunning) {
+            Start-Sleep -Milliseconds 1800
+            $after = Get-InstallSnapshot $entry
+
+            if ($wasRemovedByUser -or -not $after.BrowserInstalled) {
+                $tuneOpened = Open-ReleaseYandexTunePage
+                $crxShown = Show-ReleaseCrxInExplorer ([string]$result.CrxPath)
+                Write-AppLog ("No-restart activation UI: tune_opened=" + $tuneOpened + "; crx_selected=" + $crxShown)
+
+                $message = (
+                    $name + " " + $result.Version + " подготовлен." +
+                    [Environment]::NewLine + [Environment]::NewLine +
+                    "Перезапуск Яндекс.Браузера не требуется." +
+                    [Environment]::NewLine +
+                    "Открыта страница browser://tune и в Проводнике выделен проверенный CRX." +
+                    [Environment]::NewLine +
+                    "Если Браузер покажет предложение включить расширение — подтвердите его. Если предложения нет, перетащите выделенный CRX на открытую страницу и подтвердите установку."
+                )
+            }
+            else {
+                $message = (
+                    $name + " " + $result.Version + " установлен в уже работающий Яндекс.Браузер без перезапуска."
+                )
+            }
+        }
+        else {
+            $message = (
+                $name + " " + $result.Version + " зарегистрирован." +
+                [Environment]::NewLine + [Environment]::NewLine +
+                "Яндекс.Браузер сейчас не запущен; при следующем обычном запуске он подхватит расширение автоматически."
+            )
+        }
+
         [System.Windows.Forms.MessageBox]::Show(
-            ($name + " " + $result.Version + " установлен." + [Environment]::NewLine + [Environment]::NewLine + $(if ([bool](Get-ReleaseProperty $result "BrowserWasRunning" $false)) { "Регистрация передана уже работающему Яндекс.Браузеру. Появление расширения может занять несколько секунд." } else { "При следующем запуске Яндекс.Браузер подхватит регистрацию автоматически." })),
+            $message,
             "ExtensionInstaller",
             [System.Windows.Forms.MessageBoxButtons]::OK,
             [System.Windows.Forms.MessageBoxIcon]::Information
