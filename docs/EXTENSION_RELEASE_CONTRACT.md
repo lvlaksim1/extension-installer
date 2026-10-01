@@ -20,9 +20,11 @@ The installer owns a pinned catalog entry:
 
 `extension_id` is an installer-side trust anchor. Release metadata is not allowed to silently change it.
 
+`channel` may be `stable` or `prerelease`. `stable` resolves GitHub's latest stable Release. `prerelease` resolves the newest published non-draft prerelease and is intended for controlled integration testing.
+
 ## GitHub Release assets
 
-A stable extension release must contain:
+Every installable extension release, whether stable or prerelease, must contain:
 
 - exactly one `extension-release.json`;
 - the signed CRX named by that descriptor.
