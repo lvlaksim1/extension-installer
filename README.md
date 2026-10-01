@@ -48,3 +48,12 @@ ExtensionInstaller is packaged as a per-user Windows installer using Inno Setup.
 - GitHub Actions artifacts are not used for installer distribution.
 
 The current installable build is a prerelease while the GUI is still being migrated from the legacy local ZIP/RSA workflow to the signed-release workflow.
+
+
+## Uninstall data policy
+
+During interactive uninstall, ExtensionInstaller asks whether to remove its working data as well.
+
+- **No**: removes the installed program under `%LOCALAPPDATA%\Programs\ExtensionInstaller` but preserves `%LOCALAPPDATA%\ExtensionInstaller`.
+- **Yes**: also removes `%LOCALAPPDATA%\ExtensionInstaller`, including settings and logs.
+- Silent uninstall preserves working data by default.
