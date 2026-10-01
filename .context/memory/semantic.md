@@ -34,7 +34,7 @@ Network Recorder v1.6.0 uses Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`. Gi
 
 ## SM-005 — current product/release gate
 
-Preview.11 exposed a real-browser migration/state-detection defect after the owner removed the legacy-installed Network Recorder through Yandex Browser. Preview `4.0.0-preview.16` supersedes it as the current test candidate and passed Windows validation/build runs `36938925514` and `36938989331`. Preview.16 also gives `extensions.external_uninstalls` precedence over stale extension directories when determining actual browser installation state.
+Preview.11 exposed a real-browser migration/state-detection defect after the owner removed the legacy-installed Network Recorder through Yandex Browser. Preview `4.0.0-preview.22` supersedes it as the current test candidate and passed Windows validation/build runs `36941205548` and `36941269628`. Preview.22 derives installed state from browser profile `extensions.settings`, treats stale extension directories as non-authoritative, and uses a two-phase registry re-registration for no-restart installation into an already-running browser.
 
 The remaining gate is owner-side verification of the corrected reinstall/migration path, followed by a real later-version extension update.
 
@@ -50,4 +50,12 @@ Status/migration logic must distinguish these states and must retain protection 
 
 - source: owner runtime observation + verified v3 source + current implementation/CI
 - authority: owner-runtime-evidence + verified-repository + verified-ci
+- status: active
+
+## SM-007 — no-restart install uses browser-owned registry watching
+
+When Yandex Browser is already running, ExtensionInstaller must not modify profile Preferences behind the browser's back. For an owned existing external-registration key, remove the child key, allow the browser registry watcher to observe removal, then recreate the key with the validated CRX path/version. This preserves the browser as the authority for its in-memory extension/preferences state and restores hot installation behavior.
+
+- source: owner directive + Chromium external registry loader + verified implementation/CI
+- authority: owner-directive + verified-repository + verified-ci
 - status: active
