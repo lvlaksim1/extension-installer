@@ -1,8 +1,8 @@
 # Next actions
 
-1. Configure the existing Network Recorder RSA private key in GitHub secret scope for `lvlaksim1/network-recorder` without committing or persisting it in repository state.
-2. Add the GitHub-side CRX signing/release workflow and verify that it produces Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`.
-3. Publish the first signed Network Recorder v1.6.0 release with `extension-release.json`, signed CRX and SHA-256 metadata, without retained Actions artifacts.
-4. Add Network Recorder to `extension-installer/catalog/extensions.json`.
-5. Integrate `src/ReleaseInstaller.ps1` into the ExtensionInstaller GUI and replace the legacy local ZIP/RSA path.
-6. Perform a real Yandex Browser install/update test through ExtensionInstaller before removing legacy signing code or designating a stable ExtensionInstaller release.
+1. Owner installs `ExtensionInstaller_Setup_v4.0.0-preview.10.exe` over the currently installed ExtensionInstaller.
+2. Confirm that the old local-folder/ZIP interface is gone and the GUI shows catalog-driven Network Recorder state only.
+3. In the new GUI, run the Network Recorder release check and install Network Recorder v1.6.0.
+4. Verify on the owner's real Yandex Browser that Extension ID is `paolfcaakecapidipfcfbbhgkpcmgcip`, registration succeeds and the extension functions normally.
+5. After real installation verification, decide whether to promote Network Recorder v1.6.0 from prerelease to stable and switch its catalog channel to `stable`.
+6. Perform an actual update-path test with a later Network Recorder release before designating a stable ExtensionInstaller release.
