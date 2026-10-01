@@ -26,7 +26,7 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          $version = "3.0.2-preview.${{ github.run_number }}"
+          $version = "4.0.0-preview.${{ github.run_number }}"
           $result = .\installer\Build-Installer.ps1 -Version $version
           "version=$($result.Version)" >> $env:GITHUB_OUTPUT
           "setup_path=$($result.Path)" >> $env:GITHUB_OUTPUT
@@ -41,12 +41,33 @@ jobs:
           if (-not (Test-Path -LiteralPath $setup -PathType Leaf)) { throw 'Setup EXE not found.' }
           if ((Get-Item -LiteralPath $setup).Length -lt 100000) { throw 'Setup EXE is unexpectedly small.' }
 
-          $source = [IO.File]::ReadAllText((Resolve-Path '.\src\ReleaseInstaller.ps1'))
+          $engine = [IO.File]::ReadAllText((Resolve-Path '.\src\ReleaseInstaller.ps1'))
           foreach ($forbidden in @('RSA_PRIVATE_KEY.txt','LoadOrCreateKey(','ExportCspBlob(true)')) {
-            if ($source.Contains($forbidden)) { throw "Private-key behavior found in release engine: $forbidden" }
+            if ($engine.Contains($forbidden)) { throw "Private-key behavior found in release engine: $forbidden" }
           }
 
-          Write-Host "SETUP_VALID $setup"
+          $guiPath = Resolve-Path '.\src\ExtensionInstaller.ps1'
+          $gui = [IO.File]::ReadAllText($guiPath)
+          [void][scriptblock]::Create($gui)
+          foreach ($forbidden in @('ExtensionInstaller.cmd','FolderBrowserDialog','UniversalExtensionBuilder','RSA_PRIVATE_KEY')) {
+            if ($gui.Contains($forbidden)) { throw "Legacy behavior found in clean GUI: $forbidden" }
+          }
+
+          . .\src\ReleaseInstaller.ps1
+          $catalog = Read-ExtensionCatalog '.\catalog\extensions.json'
+          if (@($catalog.extensions).Count -ne 1) { throw 'Expected Network Recorder catalog entry.' }
+          $entry = @($catalog.extensions)[0]
+          if ([string]$entry.slug -cne 'network-recorder') { throw 'Unexpected catalog extension.' }
+          if ([string]$entry.extension_id -cne 'paolfcaakecapidipfcfbbhgkpcmgcip') { throw 'Pinned Extension ID changed.' }
+
+          $checkRoot = Join-Path $env:RUNNER_TEMP 'extension-release-check'
+          $resolved = Resolve-LatestSignedExtensionRelease $entry $checkRoot
+          if ([string]$resolved.ExtensionId -cne 'paolfcaakecapidipfcfbbhgkpcmgcip') { throw 'Resolved Extension ID changed.' }
+          if (-not $resolved.Version) { throw 'Resolved version missing.' }
+          if (-not (Test-Path -LiteralPath $resolved.CrxPath -PathType Leaf)) { throw 'Validated CRX missing.' }
+          Remove-Item -LiteralPath $checkRoot -Recurse -Force -ErrorAction SilentlyContinue
+
+          Write-Host "CLEAN_RELEASE_GUI_VALID $setup"
 
       - name: Smoke-test install, in-place reinstall, and uninstall
         shell: powershell
@@ -62,7 +83,7 @@ jobs:
 
           Invoke-Setup $setup
 
-          foreach ($name in @('ExtensionInstaller.cmd','ExtensionInstaller.vbs','ReleaseInstaller.ps1')) {
+          foreach ($name in @('ExtensionInstaller.ps1','ExtensionInstaller.vbs','ReleaseInstaller.ps1')) {
             $path = Join-Path $installDir $name
             if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Installed file missing: $path" }
           }
@@ -83,7 +104,7 @@ jobs:
           if ($u.ExitCode -ne 0) { throw "Uninstaller failed with exit code $($u.ExitCode)." }
           if (-not (Test-Path -LiteralPath $dataDir -PathType Container)) { throw 'Silent uninstall unexpectedly removed user data.' }
 
-          foreach ($name in @('ExtensionInstaller.cmd','ExtensionInstaller.vbs','ReleaseInstaller.ps1')) {
+          foreach ($name in @('ExtensionInstaller.ps1','ExtensionInstaller.vbs','ReleaseInstaller.ps1')) {
             if (Test-Path -LiteralPath (Join-Path $installDir $name) -PathType Leaf) { throw "Installed file remained after uninstall: $name" }
           }
 
@@ -116,7 +137,7 @@ jobs:
           - no GitHub Actions artifacts are retained
           - SHA-256: ${{ steps.build.outputs.sha256 }}
 
-          This preview does not yet switch the main GUI from the legacy local ZIP/RSA workflow to the new signed-release workflow.
+          This preview contains only the clean catalog -> signed GitHub Release -> verified CRX workflow. Local extension folders, ZIP selection and local RSA signing are not part of the application.
           "@
 
           gh release create $tag '${{ steps.build.outputs.setup_path }}' --target "$env:GITHUB_SHA" --title $title --notes $notes --prerelease
