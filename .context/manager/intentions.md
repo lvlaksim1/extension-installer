@@ -19,4 +19,4 @@
 ## EI-PM-004 — prepare first real ecosystem integration
 - status: accepted/active
 - source: owner directive
-- commitment: after the installer contract is defined, integrate EINV Network Recorder as the first separately managed extension without silently changing its stable identity or chosen stable code baseline.
+- commitment: after the installer contract is defined, integrate Network Recorder as the first separately managed extension without silently changing its stable identity or chosen stable code baseline.
