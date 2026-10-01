@@ -89,3 +89,18 @@ The first extension is named `Network Recorder`.
 - canonical name/version: `Network Recorder` / `1.6.0`
 - stable Extension ID derived from the manifest public key: `paolfcaakecapidipfcfbbhgkpcmgcip`
 - private key status: not committed; next step is GitHub secret onboarding and signed release workflow
+
+
+## Network Recorder signing state
+
+- signing secret name: `RSA_PRIVATE_KEY_BASE64` (value never persisted here)
+- signing workflow: `.github/workflows/build-signed-prerelease.yml`
+- build script: `tools/Build-SignedCrx.ps1`
+- verified prerelease: `network-recorder-v1.6.0-preview-1`
+- Extension ID: `paolfcaakecapidipfcfbbhgkpcmgcip`
+- CRX SHA-256: `3516149ea638f6ff10626c1ae974c92627e220c1e86b5c5195abdea4700c26cf`
+- assets: `Network_Recorder_v1.6.0.crx`, `extension-release.json`
+- Network Recorder signing workflow: success
+- ExtensionInstaller independent release validation: success
+- retained Actions artifacts: none
+- stable release has not been published yet.
