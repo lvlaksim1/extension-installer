@@ -33,3 +33,9 @@
 - status: accepted/active
 - source: owner directive
 - commitment: manage the shared ExtensionInstaller + extension-repository integration from `extension-installer-project-manager` while extension repositories remain agentless unless the owner later assigns them their own manager.
+
+
+### EI-PM-004 progress
+- Network Recorder repository created agentless by owner decision.
+- Network Recorder v1.6.0 baseline import completed byte-for-byte through repo-factory.
+- Next dependency: move the existing signing key into GitHub secret scope and produce a verified signed v1.6.0 release.
