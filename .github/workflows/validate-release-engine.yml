@@ -1,0 +1,44 @@
+name: Validate Release Engine
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  validate:
+    if: github.event.issue.user.login == 'lvlaksim1' && github.event.issue.title == '[VALIDATE_RELEASE_ENGINE]'
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate PowerShell 5.1 release engine
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          . .\src\ReleaseInstaller.ps1
+          Initialize-Crx3PackageInspector
+          $catalog = Read-ExtensionCatalog '.\catalog\extensions.json'
+          if ($catalog.schema_version -ne 1) { throw 'Unexpected catalog schema version.' }
+
+          $source = [IO.File]::ReadAllText((Resolve-Path '.\src\ReleaseInstaller.ps1'))
+          foreach ($forbidden in @('RSA_PRIVATE_KEY.txt','ExportCspBlob(true)','LoadOrCreateKey(')) {
+            if ($source.Contains($forbidden)) { throw "Private-key behavior leaked into release engine: $forbidden" }
+          }
+
+          Write-Host 'RELEASE_ENGINE_VALID'
+
+      - name: Report
+        if: always()
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RESULT: ${{ job.status }}
+        run: |
+          if ($env:RESULT -eq 'success') { $body = 'RELEASE_ENGINE_VALID' } else { $body = 'RELEASE_ENGINE_INVALID' }
+          gh api --method POST "repos/$env:GITHUB_REPOSITORY/issues/$env:ISSUE_NUMBER/comments" -f body="$body"
