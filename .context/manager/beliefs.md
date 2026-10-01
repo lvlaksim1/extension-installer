@@ -69,7 +69,7 @@ ExtensionInstaller uses a fixed Inno Setup AppId and per-user path `%LOCALAPPDAT
 
 The current setup explicitly deletes an obsolete `ExtensionInstaller.cmd` from an older installation. Windows CI simulated that stale file and verified its removal during in-place upgrade.
 
-- source: Windows CI run 36934806674
+- source: Windows CI run 36935180820
 - authority: verified-ci
 
 ## B11 — uninstall data policy
@@ -81,7 +81,7 @@ Interactive uninstall asks whether to remove `%LOCALAPPDATA%\ExtensionInstaller`
 
 ## B12 — current verified preview
 
-The current verified clean installer preview is `4.0.0-preview.10`, tag `installer-preview-10`, SHA-256 `9df7f12515cc856010760bcdcc921a36ab517cb63245e94f8d74f5179d696fbc`.
+The current verified clean installer preview is `4.0.0-preview.11`, tag `installer-preview-11`, SHA-256 `32ad90c6951304c3a5698f8915de6fc69d21165dc77875625bf230cce77888e6`.
 
-- source: GitHub Release + successful Windows CI run 36934806674
+- source: GitHub Release + successful Windows CI run 36935180820
 - authority: verified-ci + verified-repository
