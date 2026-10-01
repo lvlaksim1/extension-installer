@@ -1,6 +1,6 @@
 # Latest handoff
 
-Updated: 2026-10-02 01:24 MSK
+Updated: 2026-10-02 01:28 MSK
 
 ## Manager
 
@@ -28,11 +28,11 @@ Canonical flow:
 
 ## Current installer preview
 
-- version: `4.0.0-preview.10`
-- tag: `installer-preview-10`
-- asset: `ExtensionInstaller_Setup_v4.0.0-preview.10.exe`
-- SHA-256: `9df7f12515cc856010760bcdcc921a36ab517cb63245e94f8d74f5179d696fbc`
-- Windows CI run: `36934806674`
+- version: `4.0.0-preview.11`
+- tag: `installer-preview-11`
+- asset: `ExtensionInstaller_Setup_v4.0.0-preview.11.exe`
+- SHA-256: `32ad90c6951304c3a5698f8915de6fc69d21165dc77875625bf230cce77888e6`
+- Windows CI run: `36935180820`
 - verified: GUI/engine/catalog validation, live Network Recorder release resolution and CRX verification, install, simulated upgrade from stale CMD, reinstall, uninstall with data preserved, uninstall with data removed
 - retained Actions artifacts: none
 
@@ -52,4 +52,4 @@ Canonical flow:
 
 ## Resume point
 
-Owner installs ExtensionInstaller `4.0.0-preview.10` over the current installation, then performs the first real Network Recorder install through the new GUI on Yandex Browser. Stable publication remains gated on real install/update verification.
+Owner installs ExtensionInstaller `4.0.0-preview.11` over the current installation, then performs the first real Network Recorder install through the new GUI on Yandex Browser. Stable publication remains gated on real install/update verification.
