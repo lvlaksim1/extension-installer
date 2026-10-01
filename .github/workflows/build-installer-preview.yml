@@ -1,0 +1,93 @@
+name: Build Installer Preview
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  build:
+    if: github.event.issue.user.login == 'lvlaksim1' && github.event.issue.title == '[BUILD_INSTALLER_PREVIEW]'
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Inno Setup
+        shell: powershell
+        run: |
+          choco install innosetup -y --no-progress
+
+      - name: Build installer
+        id: build
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = "3.0.2-preview.${{ github.run_number }}"
+          $result = .\installer\Build-Installer.ps1 -Version $version
+          "version=$($result.Version)" >> $env:GITHUB_OUTPUT
+          "setup_path=$($result.Path)" >> $env:GITHUB_OUTPUT
+          "sha256=$($result.Sha256)" >> $env:GITHUB_OUTPUT
+          "size=$($result.Size)" >> $env:GITHUB_OUTPUT
+
+      - name: Validate installer payload
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $setup = '${{ steps.build.outputs.setup_path }}'
+          if (-not (Test-Path -LiteralPath $setup -PathType Leaf)) { throw 'Setup EXE not found.' }
+          if ((Get-Item -LiteralPath $setup).Length -lt 100000) { throw 'Setup EXE is unexpectedly small.' }
+
+          $source = [IO.File]::ReadAllText((Resolve-Path '.\src\ReleaseInstaller.ps1'))
+          foreach ($forbidden in @('RSA_PRIVATE_KEY.txt','LoadOrCreateKey(','ExportCspBlob(true)')) {
+            if ($source.Contains($forbidden)) { throw "Private-key behavior found in release engine: $forbidden" }
+          }
+
+          Write-Host "SETUP_VALID $setup"
+
+      - name: Publish prerelease directly
+        id: release
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag = "installer-preview-${{ github.run_number }}"
+          $title = "ExtensionInstaller ${{ steps.build.outputs.version }}"
+          $notes = @"
+          Installable preview of ExtensionInstaller.
+
+          - per-user installation
+          - fixed AppId for in-place upgrades
+          - installs to %LOCALAPPDATA%\Programs\ExtensionInstaller
+          - no GitHub Actions artifacts are retained
+          - SHA-256: ${{ steps.build.outputs.sha256 }}
+
+          This preview does not yet switch the main GUI from the legacy local ZIP/RSA workflow to the new signed-release workflow.
+          "@
+
+          gh release create $tag '${{ steps.build.outputs.setup_path }}' --target "$env:GITHUB_SHA" --title $title --notes $notes --prerelease
+          $url = gh release view $tag --json url -q .url
+          "release_url=$url" >> $env:GITHUB_OUTPUT
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Report
+        if: always()
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RESULT: ${{ job.status }}
+          RELEASE_URL: ${{ steps.release.outputs.release_url }}
+          VERSION: ${{ steps.build.outputs.version }}
+          SHA256: ${{ steps.build.outputs.sha256 }}
+        run: |
+          if ($env:RESULT -eq 'success') {
+            $body = "INSTALLER_PREVIEW_READY`nVersion: $env:VERSION`nSHA-256: $env:SHA256`n$env:RELEASE_URL"
+          } else {
+            $body = "INSTALLER_PREVIEW_FAILED"
+          }
+          gh api --method POST "repos/$env:GITHUB_REPOSITORY/issues/$env:ISSUE_NUMBER/comments" -f body="$body"
