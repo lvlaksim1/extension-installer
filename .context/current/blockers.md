@@ -1,8 +1,8 @@
 # Current blockers and open risks
 
 - No repository/CI blocker is currently known.
-- Real owner-side verification of the corrected Yandex Browser migration/reinstall path in `4.0.0-preview.16` is pending.
-- Because Yandex/Chromium records a user-removed external extension, Yandex Browser must be fully closed when ExtensionInstaller performs an explicit reinstall that clears the target `external_uninstalls` marker.
-- The corrected state-detection logic is covered by Windows CI with simulated browser-profile/Preferences state but still requires confirmation against the owner's real Yandex Browser profile.
-- A real extension-version update in Yandex Browser still requires a later Network Recorder release.
+- Real owner-side verification of hot Network Recorder installation into an already-running Yandex Browser in `4.0.0-preview.22` is pending.
+- Preview.22 intentionally avoids editing Yandex Preferences while the browser is running; it uses Chromium/Yandex live registry-change handling via a two-phase owned-key remove/recreate.
+- Browser installed-state detection now uses profile `extensions.settings`; stale extension directories alone must not produce “Установлено”.
+- A real later-version extension update in Yandex Browser still requires a later Network Recorder release.
 - Network Recorder remains on the `prerelease` catalog channel until owner-side verification passes.
