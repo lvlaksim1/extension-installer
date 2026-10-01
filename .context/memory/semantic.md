@@ -34,7 +34,7 @@ Network Recorder v1.6.0 uses Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`. Gi
 
 ## SM-005 — current product/release gate
 
-Preview.11 exposed a real-browser migration/state-detection defect after the owner removed the legacy-installed Network Recorder through Yandex Browser. Preview `4.0.0-preview.22` supersedes it as the current test candidate and passed Windows validation/build runs `36941205548` and `36941269628`. Preview.22 derives installed state from browser profile `extensions.settings`, treats stale extension directories as non-authoritative, and uses a two-phase registry re-registration for no-restart installation into an already-running browser.
+Preview.11 exposed a real-browser migration/state-detection defect after the owner removed the legacy-installed Network Recorder through Yandex Browser. Preview `4.0.0-preview.24` supersedes it as the current test candidate and passed Windows validation/build runs `36942756644` and `36942832970`. Preview.24 derives installed state from browser profile `extensions.settings`, treats stale extension directories as non-authoritative, first uses two-phase registry re-registration for no-restart installation, and falls back to browser-owned `browser://tune` installation with the exact verified CRX selected when the extension was user-removed or is not accepted live.
 
 The remaining gate is owner-side verification of the corrected reinstall/migration path, followed by a real later-version extension update.
 
@@ -58,4 +58,14 @@ When Yandex Browser is already running, ExtensionInstaller must not modify profi
 
 - source: owner directive + Chromium external registry loader + verified implementation/CI
 - authority: owner-directive + verified-repository + verified-ci
+- status: active
+
+## SM-008 — do not silently defeat browser user-removal state
+
+When the user removes an externally registered extension through Yandex Browser, the browser may remember that decision and ignore later external registration. A registry pulse is useful for normal hot registration but is not a legitimate substitute for user confirmation after explicit browser removal.
+
+The reusable recovery pattern is: keep the browser running, attempt the normal hot registration, then if browser profile state still lacks the extension (or the prior snapshot records user removal), open the browser's extension-management page and surface the already verified CRX for normal confirmation. Do not edit live browser Preferences behind the browser.
+
+- source: owner runtime observation + browser external-extension semantics + preview.24 implementation/CI
+- authority: owner-runtime-evidence + verified-repository + verified-ci
 - status: active
