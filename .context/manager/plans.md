@@ -1,11 +1,9 @@
 # Manager plans
 
-Current plan for active intentions EI-PM-002…004:
-
-1. **Completed for this stage:** audit `src/ExtensionInstaller.cmd` and separate responsibilities into bootstrap, local discovery, manifest/package preparation, signing, browser registration, rollback/uninstall, browser assistance and GUI.
-2. **Completed for this stage:** define release contract v1 with pinned catalog identity, `extension-release.json`, signed CRX asset and SHA-256.
-3. **Completed for this stage:** implement and Windows-validate a release acquisition/verification engine that requires no private RSA key.
-4. **Completed for this stage:** implement the new signed-CRX registration/update/rollback/uninstall primitives.
-5. **Next:** integrate the validated engine into the user-facing installer GUI and replace local folder/ZIP selection as the primary path.
-6. **Next:** create the Network Recorder repository, move its retained RSA key into GitHub secret scope, publish the selected stable 1.6.0 as a signed release, and pin its existing Extension ID in the installer catalog.
-7. **Gate:** verify real Yandex Browser installation/update before deleting legacy signing functions or publishing a stable installer release.
+1. Owner installs clean preview `4.0.0-preview.10` over the currently installed ExtensionInstaller.
+2. Verify the old folder/ZIP UI and obsolete installed CMD are gone on the owner's PC.
+3. Use the new catalog GUI to resolve and install Network Recorder v1.6.0 from its signed GitHub prerelease.
+4. Verify actual Yandex Browser registration, Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`, extension startup and normal Network Recorder behavior.
+5. If the real install passes, promote Network Recorder v1.6.0 to a stable GitHub Release and switch its catalog channel from `prerelease` to `stable`.
+6. Produce a later Network Recorder release and verify a real update through ExtensionInstaller.
+7. After install/update verification and owner approval, designate a stable ExtensionInstaller release.
