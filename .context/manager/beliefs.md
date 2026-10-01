@@ -76,7 +76,7 @@ ExtensionInstaller uses a fixed Inno Setup AppId and per-user path `%LOCALAPPDAT
 
 The current setup explicitly deletes an obsolete `ExtensionInstaller.cmd` from an older installation. Windows CI simulated that stale file and verified its removal during in-place upgrade.
 
-- source: Windows CI run 36935180820
+- source: Windows CI
 - authority: verified-ci
 
 ## B12 — uninstall data policy
@@ -88,14 +88,32 @@ Interactive uninstall asks whether to remove `%LOCALAPPDATA%\ExtensionInstaller`
 
 ## B13 — current verified preview
 
-The current verified clean installer preview is `4.0.0-preview.11`, tag `installer-preview-11`, SHA-256 `32ad90c6951304c3a5698f8915de6fc69d21165dc77875625bf230cce77888e6`.
+The current verified clean installer preview is `4.0.0-preview.14`, tag `installer-preview-14`, SHA-256 `898bef8f3f0ca6cf6c3fe26841ac5e529b663b434f5460aec454f9ccb5498ad0`.
 
-- source: GitHub Release + successful Windows CI run 36935180820
-- authority: verified-ci + verified-repository
+It supersedes preview.11 as the owner-test candidate because preview.11 exposed a real migration/state-detection defect.
+
+- source: owner runtime evidence + GitHub Release + successful Windows validation/build runs `36938821186` and `36938882816`
+- authority: owner-runtime-evidence + verified-ci + verified-repository
 
 ## B14 — current release gate
 
-Repository and CI validation are green, but the owner-side real Yandex Browser installation/function path has not yet been verified. Stable publication remains gated on that real-browser test and explicit owner approval.
+Repository and CI validation are green, but owner-side verification of the corrected real Yandex Browser reinstall/migration path is still pending. Stable publication remains gated on real install/update verification and explicit owner approval.
 
 - source: verified current state + owner release authority
 - authority: verified-repository + owner-directive
+
+## B15 — browser state is not equivalent to external registry state
+
+For externally registered Chromium/Yandex extensions, a remaining registry entry is not sufficient evidence that the extension is currently installed in the browser. The owner observed this directly after removing Network Recorder through Yandex Browser while the old ExtensionInstaller registration remained.
+
+Current product logic separately models actual profile extension files, browser user-uninstall markers, current manager-owned registration/state, exact v3 legacy-owned registration, and foreign registration.
+
+- source: owner runtime observation + verified implementation/CI
+- authority: owner-runtime-evidence + verified-repository + verified-ci
+
+## B16 — v3 registration is migratable owner state
+
+The prior ExtensionInstaller stored registered CRX files under `%LOCALAPPDATA%\UniversalExtensionBuilder\projects\<extension-id>\crx`. That exact path is recognized as legacy ExtensionInstaller-owned state for migration/removal; unrelated paths remain protected as foreign.
+
+- source: verified v3 source + current migration implementation
+- authority: verified-repository

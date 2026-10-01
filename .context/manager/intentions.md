@@ -9,7 +9,7 @@
 - status: completed
 - source: owner directive
 - result: clean PowerShell GUI + release engine + catalog; local source-folder/ZIP/RSA product path removed from the current tree.
-- verification: Windows CI run `36935180820`.
+- verification: Windows CI.
 
 ## EI-PM-003 — preserve security and storage invariants
 - status: active
@@ -17,16 +17,16 @@
 - commitment: keep private signing material out of Git/local installer, preserve Extension IDs, verify signed releases, prevent foreign-registration takeover and avoid retained build artifacts.
 
 ## EI-PM-004 — integrate Network Recorder
-- status: active; repository/signing/software integration complete, real-browser gate pending
+- status: active; corrected real-browser migration/reinstall retest pending
 - source: owner directive
-- result so far: Network Recorder v1.6.0 source is in its own public repository, signing secret is GitHub-hosted, signed prerelease preserves the original Extension ID, catalog entry is active, and ExtensionInstaller resolves/verifies it successfully.
-- remaining: owner-side Yandex Browser installation/function verification, then a real later-version update test.
+- result so far: Network Recorder v1.6.0 source is in its own public repository, signing secret is GitHub-hosted, signed prerelease preserves the original Extension ID, catalog entry is active, and ExtensionInstaller resolves/verifies it successfully. Owner-side preview.11 testing exposed a legacy-registration/manual-browser-removal defect; preview.14 contains the CI-verified correction.
+- remaining: owner-side preview.14 Yandex Browser reinstall/function verification, then a real later-version update test.
 
 ## EI-PM-005 — make ExtensionInstaller installable/updatable
 - status: completed
 - source: owner directive
 - result: single Inno Setup EXE, fixed AppId, per-user installation, in-place update, obsolete installed CMD cleanup, optional removal of application data on uninstall.
-- verification: Windows CI run `36935180820`.
+- current verified setup: `4.0.0-preview.14`; build run `36938882816`.
 
 ## EI-PM-006 — coordinate extension ecosystem
 - status: active

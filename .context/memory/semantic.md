@@ -34,8 +34,20 @@ Network Recorder v1.6.0 uses Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`. Gi
 
 ## SM-005 — current product/release gate
 
-Clean preview `4.0.0-preview.11` passed Windows CI, including stale-CMD cleanup during upgrade. The remaining gate is real owner-side Yandex Browser installation and later real extension-update verification.
+Preview.11 exposed a real-browser migration/state-detection defect after the owner removed the legacy-installed Network Recorder through Yandex Browser. Preview `4.0.0-preview.14` supersedes it as the current test candidate and passed Windows validation/build runs `36938821186` and `36938882816`.
 
-- source: Windows CI run `36935180820` + current project state
-- authority: verified-ci + verified-repository
+The remaining gate is owner-side verification of the corrected reinstall/migration path, followed by a real later-version extension update.
+
+- source: owner runtime observation + verified Windows CI + current repository
+- authority: owner-runtime-evidence + verified-ci + verified-repository
+- status: active
+
+## SM-006 — external registration is not actual-install evidence
+
+A Yandex external-extension registry entry can remain after the user removes the extension in the browser. The old ExtensionInstaller v3 path under `UniversalExtensionBuilder\projects\<id>\crx` is legacy-owned, not foreign. Browser user removal may also be persisted in `extensions.external_uninstalls`.
+
+Status/migration logic must distinguish these states and must retain protection against genuinely foreign registrations.
+
+- source: owner runtime observation + verified v3 source + current implementation/CI
+- authority: owner-runtime-evidence + verified-repository + verified-ci
 - status: active

@@ -1,41 +1,45 @@
 # Current state
 
-Updated: 2026-10-02 01:40 MSK
+Updated: 2026-10-02 02:07 MSK
 
 - Repository: `lvlaksim1/extension-installer`.
 - Visibility: public.
 - Product branch: `main`.
 - Manager-state branch: `main`.
 - Durable manager: `extension-installer-project-manager`.
-- Owner directive: all legacy ExtensionInstaller functionality is removed from the current product; the application must expose only the new release-driven workflow.
+- Owner directive: all legacy ExtensionInstaller functionality is removed from the current product; the application exposes only the release-driven workflow.
 - Current user-facing GUI: `src/ExtensionInstaller.ps1`.
 - Release acquisition/verification engine: `src/ReleaseInstaller.ps1`.
 - Launcher: `src/ExtensionInstaller.vbs`.
 - Extension catalog: `catalog/extensions.json`.
 - Release contract: `docs/EXTENSION_RELEASE_CONTRACT.md`.
-- Current product tree contains no `src/ExtensionInstaller.cmd`, no local extension-folder selector, no local ZIP discovery/build/signing path and no local RSA private-key path.
-- The Inno Setup upgrade explicitly deletes an obsolete `ExtensionInstaller.cmd` left by older installed previews.
 - Canonical application flow: catalog -> GitHub Release -> `extension-release.json` -> SHA-256 + CRX3 signature + Extension ID verification -> installer-owned CRX/state -> Yandex Browser registration.
-- The catalog currently contains Network Recorder only.
-- Network Recorder repository: `lvlaksim1/network-recorder`.
-- Network Recorder has no separate Project Manager by owner decision; ecosystem coordination remains with `extension-installer-project-manager`.
-- Network Recorder source baseline: v1.6.0.
-- Pinned Network Recorder Extension ID: `paolfcaakecapidipfcfbbhgkpcmgcip`.
-- Current Network Recorder catalog channel: `prerelease`.
-- Network Recorder signing secret name: `RSA_PRIVATE_KEY_BASE64`; the secret value is never stored in the capsule.
-- Verified Network Recorder prerelease: `network-recorder-v1.6.0-preview-1`.
-- Verified CRX SHA-256: `3516149ea638f6ff10626c1ae974c92627e220c1e86b5c5195abdea4700c26cf`.
-- Network Recorder release contains `Network_Recorder_v1.6.0.crx` and `extension-release.json` as GitHub Release assets; users do not place these files manually.
-- ExtensionInstaller independently validated the published Network Recorder CRX descriptor, SHA-256, CRX3 signature and embedded Extension ID.
+- Current product tree contains no local extension-folder selector, local ZIP discovery/build/signing path, local RSA private-key path, or `src/ExtensionInstaller.cmd`.
+- Inno Setup explicitly deletes an obsolete installed `ExtensionInstaller.cmd` during upgrade.
+- Program files live under `%LOCALAPPDATA%\Programs\ExtensionInstaller`.
 - Managed extension CRX/state lives under `%LOCALAPPDATA%\ExtensionInstaller\extensions\<extension-id>`.
 - Logs live under `%LOCALAPPDATA%\ExtensionInstaller\logs`.
-- Program files live under `%LOCALAPPDATA%\Programs\ExtensionInstaller`.
 - Interactive uninstall asks whether to remove `%LOCALAPPDATA%\ExtensionInstaller`; No preserves data, Yes deletes it.
-- Current verified clean installer preview: `4.0.0-preview.11`.
-- Release tag: `installer-preview-11`.
-- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.11.exe`.
-- Setup SHA-256: `32ad90c6951304c3a5698f8915de6fc69d21165dc77875625bf230cce77888e6`.
-- Windows CI run `36935180820` passed GUI/engine/catalog validation, live Network Recorder prerelease resolution, CRX verification, install, simulated upgrade cleanup of obsolete CMD, reinstall, both uninstall data-policy paths and direct prerelease publication.
-- No GitHub Actions artifacts were retained.
+- The catalog currently contains Network Recorder only.
+- Network Recorder repository: `lvlaksim1/network-recorder`; it has no separate Project Manager by owner decision.
+- Network Recorder source baseline: v1.6.0.
+- Pinned Extension ID: `paolfcaakecapidipfcfbbhgkpcmgcip`.
+- Catalog channel: `prerelease`.
+- Verified Network Recorder prerelease: `network-recorder-v1.6.0-preview-1`.
+- Verified CRX SHA-256: `3516149ea638f6ff10626c1ae974c92627e220c1e86b5c5195abdea4700c26cf`.
+- Network Recorder release assets are `Network_Recorder_v1.6.0.crx` and `extension-release.json`; users do not place them manually.
+- Owner-side test of preview 4.0.0-preview.11 confirmed the clean UI sees the GitHub release, but exposed a migration/state-detection defect after the previously installed Network Recorder was removed through Yandex Browser.
+- The old v3.x installer registered CRX files from `%LOCALAPPDATA%\UniversalExtensionBuilder\projects\<extension-id>\crx`; preview.11 treated that exact old ExtensionInstaller-owned path as foreign.
+- Browser-UI removal can leave the external registry registration and record the Extension ID in the Chromium/Yandex `extensions.external_uninstalls` preference, so registry presence alone is not proof that the extension remains installed.
+- Current `main` fixes this by distinguishing actual browser-profile extension files, explicit user-uninstall markers, current managed registration/state, exact v3 legacy-owned registration, and truly foreign registrations.
+- An explicit reinstall can clear only the target Extension ID from `external_uninstalls`; this operation requires Yandex Browser to be fully closed and has Preferences rollback on failure.
+- True foreign registrations remain protected from takeover/removal.
+- Windows validation run `36938821186` passed the new browser-profile, external-uninstall-marker, legacy-registration and published-release checks.
+- Current verified installer preview: `4.0.0-preview.14`.
+- Release tag: `installer-preview-14`.
+- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.14.exe`.
+- Setup SHA-256: `898bef8f3f0ca6cf6c3fe26841ac5e529b663b434f5460aec454f9ccb5498ad0`.
+- Windows build run `36938882816` passed installer build, payload validation, install/reinstall/uninstall smoke tests and direct prerelease publication.
+- Retained GitHub Actions artifacts for run `36938882816`: none.
 - Stable ExtensionInstaller publication has not been designated.
-- Next external gate: owner-side installation of preview 4.0.0-preview.11 and real Yandex Browser installation/function verification of Network Recorder.
+- Next external gate: owner installs preview 4.0.0-preview.14 and verifies the corrected real Yandex Browser reinstall/migration path for Network Recorder.
