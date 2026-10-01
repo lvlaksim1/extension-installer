@@ -1,4 +1,4 @@
-# ExtensionInstaller clean GUI.
+﻿# ExtensionInstaller clean GUI.
 # Windows PowerShell 5.1 compatible.
 # The application consumes only signed extension releases from the catalog.
 
@@ -246,14 +246,12 @@ function Refresh-SelectedExtension {
         $script:ResolvedRelease = $null
         $script:AvailableVersionValue.Text = "—"
         $script:ReleaseValue.Text = "—"
+        Update-UiFromState $entry
         Set-StatusText ("Ошибка проверки: " + $_.Exception.Message) "Error"
         Write-AppLog $_.Exception.Message "ERROR"
     }
     finally {
         Set-Busy $false
-        if ($null -ne $entry) {
-            Update-UiFromState $entry
-        }
     }
 }
 
