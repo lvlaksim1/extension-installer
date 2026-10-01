@@ -1,6 +1,6 @@
 # Current state
 
-Updated: 2026-10-02 02:09 MSK
+Updated: 2026-10-02 02:32 MSK
 
 - Repository: `lvlaksim1/extension-installer`.
 - Visibility: public.
@@ -32,15 +32,15 @@ Updated: 2026-10-02 02:09 MSK
 - The old v3.x installer registered CRX files from `%LOCALAPPDATA%\UniversalExtensionBuilder\projects\<extension-id>\crx`; preview.11 treated that exact old ExtensionInstaller-owned path as foreign.
 - Browser-UI removal can leave the external registry registration and record the Extension ID in the Chromium/Yandex `extensions.external_uninstalls` preference, so registry presence alone is not proof that the extension remains installed.
 - Current `main` fixes this by distinguishing actual browser-profile extension files, explicit user-uninstall markers, current managed registration/state, exact v3 legacy-owned registration, and truly foreign registrations.
-- An explicit reinstall can clear only the target Extension ID from `external_uninstalls`; this operation requires Yandex Browser to be fully closed and has Preferences rollback on failure.
+- Preview.22 no longer requires Yandex Browser to be closed for install/reinstall. If the browser is running, ExtensionInstaller does not edit its Preferences file; instead it performs a two-phase remove/recreate of the owned registry registration so Chromium/Yandex's live registry watcher observes a fresh external installation. If the browser is closed, a persisted target `external_uninstalls` marker may still be cleared safely with rollback.
 - True foreign registrations remain protected from takeover/removal.
-- Windows validation run `36938925514` passed the browser-profile, external-uninstall-marker, legacy-registration and published-release checks on the final preview.16 source.
-- Current verified installer preview: `4.0.0-preview.16`.
-- Release tag: `installer-preview-16`.
-- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.16.exe`.
-- Setup SHA-256: `d45731e08cd543b131ea19940bfa8110698ddefdd0cc3ee222597edd359f7fed`.
-- Windows build run `36938989331` passed installer build, payload validation, install/reinstall/uninstall smoke tests and direct prerelease publication.
-- Retained GitHub Actions artifacts for run `36938989331`: none.
+- Windows validation run `36941205548` passed browser-profile settings detection, stale-directory rejection, external-uninstall handling, live registry re-registration pulse, legacy-registration and published-release checks.
+- Current verified installer preview: `4.0.0-preview.22`.
+- Release tag: `installer-preview-22`.
+- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.22.exe`.
+- Setup SHA-256: `e401fc5ed03fbd5a6dead9beb243a8947f33466a6bdb7d03e8caf503d0b29dcf`.
+- Windows build run `36941269628` passed installer build, payload validation, install/reinstall/uninstall smoke tests and direct prerelease publication.
+- Retained GitHub Actions artifacts for run `36941269628`: none.
 - Stable ExtensionInstaller publication has not been designated.
-- Preview.16 supersedes preview.14 because it additionally gives the Yandex `external_uninstalls` marker precedence over stale profile extension directories.
-- Next external gate: owner installs preview 4.0.0-preview.16 and verifies the corrected real Yandex Browser reinstall/migration path for Network Recorder.
+- Preview.22 supersedes preview.16 because it restores hot registration into an already-running Yandex Browser and determines installed state from browser profile `extensions.settings` rather than stale extension directories.
+- Next external gate: owner installs preview 4.0.0-preview.22 while keeping Yandex Browser open, reinstalls Network Recorder, and verifies that it appears in the browser without restart.
