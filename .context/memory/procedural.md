@@ -41,7 +41,7 @@ For migration/reinstall tests cover at least:
 - Chromium/Yandex `extensions.external_uninstalls` after user removal;
 - unrelated/foreign registry paths.
 
-An explicit reinstall after browser-UI removal should require Yandex to be closed, edit only the target uninstall marker, and roll back Preferences if installation later fails.
+Do not use stale profile directories as proof of installation. Prefer `extensions.settings` from `Secure Preferences`/`Preferences`. When Yandex is running, do not edit its Preferences file; use the live registry-watcher path via a two-phase owned-key remove/recreate. When Yandex is closed, a persisted target uninstall marker may be edited with byte-level backup/rollback.
 
 ## PM-007 — avoid replacement-string metacharacter corruption when generating source
 
