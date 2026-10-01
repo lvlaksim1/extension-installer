@@ -77,3 +77,15 @@ The first extension is named `Network Recorder`.
 - standard Telegram secrets: not installed
 - current governance: coordinated by `extension-installer-project-manager`
 - next onboarding step: import the retained stable v1.6.0 source, then configure GitHub-side signing without changing the existing Extension ID.
+
+
+## Network Recorder baseline import
+
+- repository: `lvlaksim1/network-recorder`
+- retained archive SHA-256: `eeb0cdfdf6323c96c6aea777ad9aed889522dc9de13e467b8f447723612e1db3`
+- factory import commit: `db1993a63c08beb1a7b7353f1bfe49419d6bafde`
+- exact files imported: `background.js`, `content.js`, `manifest.json`, `offscreen.html`, `offscreen.js`
+- byte-for-byte verification: all five Git blob SHA-1 values match the retained ZIP
+- canonical name/version: `Network Recorder` / `1.6.0`
+- stable Extension ID derived from the manifest public key: `paolfcaakecapidipfcfbbhgkpcmgcip`
+- private key status: not committed; next step is GitHub secret onboarding and signed release workflow
