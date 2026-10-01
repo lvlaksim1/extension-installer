@@ -9,9 +9,9 @@ The active repository is `lvlaksim1/extension-installer`; both product and manag
 
 ## B2 — clean product invariant
 
-ExtensionInstaller now has one supported product path: catalog -> signed GitHub Release -> descriptor/SHA/CRX3 identity verification -> installer-owned local CRX/state -> Yandex Browser registration.
+ExtensionInstaller has one supported product path: catalog -> signed GitHub Release -> descriptor/SHA/CRX3 identity verification -> installer-owned local CRX/state -> Yandex Browser registration.
 
-The current product must not reintroduce local extension-source folder selection, local ZIP build/signing or local private-key handling.
+The removed legacy path must not return: no user-selected extension source directory, local ZIP discovery/build/signing, or local private-key handling.
 
 - source: owner directive + verified repository
 - authority: owner-directive + verified-repository
@@ -58,30 +58,44 @@ Network Recorder v1.6.0 is signed in GitHub Actions with secret `RSA_PRIVATE_KEY
 - source: verified network-recorder workflow + independent ExtensionInstaller validation
 - authority: verified-ci
 
-## B9 — installable application
+## B9 — release asset placement
+
+`Network_Recorder_v1.6.0.crx` and `extension-release.json` belong in the extension's GitHub Release assets. The owner does not manually copy them into ExtensionInstaller or into a local extension folder.
+
+- source: owner clarification + verified release-driven architecture
+- authority: owner-directive + verified-repository
+
+## B10 — installable application
 
 ExtensionInstaller uses a fixed Inno Setup AppId and per-user path `%LOCALAPPDATA%\Programs\ExtensionInstaller`. Upgrades replace the existing installation in place.
 
 - source: verified repository + Windows CI
 - authority: verified-repository + verified-ci
 
-## B10 — obsolete installed code cleanup
+## B11 — obsolete installed code cleanup
 
 The current setup explicitly deletes an obsolete `ExtensionInstaller.cmd` from an older installation. Windows CI simulated that stale file and verified its removal during in-place upgrade.
 
 - source: Windows CI run 36935180820
 - authority: verified-ci
 
-## B11 — uninstall data policy
+## B12 — uninstall data policy
 
 Interactive uninstall asks whether to remove `%LOCALAPPDATA%\ExtensionInstaller`. Declining preserves application data; confirming removes it. Silent uninstall preserves it unless the explicit CI/service cleanup switch is used.
 
 - source: owner directive + verified Windows CI
 - authority: owner-directive + verified-ci
 
-## B12 — current verified preview
+## B13 — current verified preview
 
 The current verified clean installer preview is `4.0.0-preview.11`, tag `installer-preview-11`, SHA-256 `32ad90c6951304c3a5698f8915de6fc69d21165dc77875625bf230cce77888e6`.
 
 - source: GitHub Release + successful Windows CI run 36935180820
 - authority: verified-ci + verified-repository
+
+## B14 — current release gate
+
+Repository and CI validation are green, but the owner-side real Yandex Browser installation/function path has not yet been verified. Stable publication remains gated on that real-browser test and explicit owner approval.
+
+- source: verified current state + owner release authority
+- authority: verified-repository + owner-directive
