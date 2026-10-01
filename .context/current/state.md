@@ -30,3 +30,8 @@
 - Setup SHA-256: `e69d4db6dc0ac55124e46dbd301d13ffb0504d8bb1b14d3955586c56073e37bd`.
 - No GitHub Actions artifact is retained; the setup EXE is published directly as a Release asset.
 - Canonical extension name for the first ecosystem integration is `Network Recorder`.
+
+- Uninstall data policy is implemented: interactive uninstall asks whether to delete `%LOCALAPPDATA%\ExtensionInstaller`; declining preserves it, confirming removes it.
+- Silent uninstall preserves working data by default; CI has an explicit cleanup switch only for exercising the full-delete path.
+- Preview `3.0.2-preview.4` passed Windows smoke tests for both uninstall branches and is published as prerelease `installer-preview-4`.
+- Preview 3.0.2-preview.4 SHA-256: `72b8938252d02520d3c35c3b1cd397d9d04f9a7346ef03cc03f96c5aa4144b9c`.
