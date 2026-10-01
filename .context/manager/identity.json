@@ -1,7 +1,7 @@
 {
   "schema": "context-capsule-manager-identity",
   "schema_version": 1,
-  "manager_id": "project-manager",
+  "manager_id": "extension-installer-project-manager",
   "role": "Project Manager",
   "repository": "lvlaksim1/extension-installer",
   "continuity": "runtime-independent",
