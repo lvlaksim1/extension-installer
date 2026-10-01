@@ -1,6 +1,6 @@
 # Current state
 
-Updated: 2026-10-02 02:07 MSK
+Updated: 2026-10-02 02:09 MSK
 
 - Repository: `lvlaksim1/extension-installer`.
 - Visibility: public.
@@ -34,12 +34,13 @@ Updated: 2026-10-02 02:07 MSK
 - Current `main` fixes this by distinguishing actual browser-profile extension files, explicit user-uninstall markers, current managed registration/state, exact v3 legacy-owned registration, and truly foreign registrations.
 - An explicit reinstall can clear only the target Extension ID from `external_uninstalls`; this operation requires Yandex Browser to be fully closed and has Preferences rollback on failure.
 - True foreign registrations remain protected from takeover/removal.
-- Windows validation run `36938821186` passed the new browser-profile, external-uninstall-marker, legacy-registration and published-release checks.
-- Current verified installer preview: `4.0.0-preview.14`.
-- Release tag: `installer-preview-14`.
-- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.14.exe`.
-- Setup SHA-256: `898bef8f3f0ca6cf6c3fe26841ac5e529b663b434f5460aec454f9ccb5498ad0`.
-- Windows build run `36938882816` passed installer build, payload validation, install/reinstall/uninstall smoke tests and direct prerelease publication.
-- Retained GitHub Actions artifacts for run `36938882816`: none.
+- Windows validation run `36938925514` passed the browser-profile, external-uninstall-marker, legacy-registration and published-release checks on the final preview.16 source.
+- Current verified installer preview: `4.0.0-preview.16`.
+- Release tag: `installer-preview-16`.
+- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.16.exe`.
+- Setup SHA-256: `d45731e08cd543b131ea19940bfa8110698ddefdd0cc3ee222597edd359f7fed`.
+- Windows build run `36938989331` passed installer build, payload validation, install/reinstall/uninstall smoke tests and direct prerelease publication.
+- Retained GitHub Actions artifacts for run `36938989331`: none.
 - Stable ExtensionInstaller publication has not been designated.
-- Next external gate: owner installs preview 4.0.0-preview.14 and verifies the corrected real Yandex Browser reinstall/migration path for Network Recorder.
+- Preview.16 supersedes preview.14 because it additionally gives the Yandex `external_uninstalls` marker precedence over stale profile extension directories.
+- Next external gate: owner installs preview 4.0.0-preview.16 and verifies the corrected real Yandex Browser reinstall/migration path for Network Recorder.
