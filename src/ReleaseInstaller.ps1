@@ -43,7 +43,7 @@ function Read-ExtensionCatalog([string]$CatalogPath) {
         if ([string]::IsNullOrWhiteSpace($name)) { throw "У записи $slug отсутствует name." }
         if ($repository -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') { throw "Некорректный GitHub repository у $slug." }
         if (-not (Test-ReleaseExtensionId $extensionId)) { throw "Некорректный extension_id у $slug." }
-        if ($channel -cne "stable" -and $channel -cne "prerelease") { throw "Неподдерживаемый channel у $slug: $channel" }
+        if ($channel -cne "stable" -and $channel -cne "prerelease") { throw "Неподдерживаемый channel у ${slug}: $channel" }
         if ($seenSlug.ContainsKey($slug)) { throw "Дублирующийся slug в каталоге: $slug" }
         if ($seenId.ContainsKey($extensionId)) { throw "Дублирующийся extension_id в каталоге: $extensionId" }
 
