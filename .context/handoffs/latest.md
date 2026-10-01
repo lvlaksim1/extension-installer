@@ -56,3 +56,12 @@ Integrate the validated release engine into the GUI, then create/onboard Network
 ## Canonical extension naming
 
 The first extension is named `Network Recorder`.
+
+
+## Uninstall data behavior
+
+- Interactive uninstall asks whether to delete `%LOCALAPPDATA%\ExtensionInstaller`.
+- Choosing No preserves settings/logs; choosing Yes deletes the working-data folder.
+- Silent uninstall preserves data by default.
+- Verified preview: `3.0.2-preview.4`, release tag `installer-preview-4`.
+- SHA-256: `72b8938252d02520d3c35c3b1cd397d9d04f9a7346ef03cc03f96c5aa4144b9c`.
