@@ -43,7 +43,7 @@ function Read-ExtensionCatalog([string]$CatalogPath) {
         if ([string]::IsNullOrWhiteSpace($name)) { throw "У записи $slug отсутствует name." }
         if ($repository -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') { throw "Некорректный GitHub repository у $slug." }
         if (-not (Test-ReleaseExtensionId $extensionId)) { throw "Некорректный extension_id у $slug." }
-        if ($channel -cne "stable") { throw "Пока поддерживается только channel=stable: $slug" }
+        if ($channel -cne "stable" -and $channel -cne "prerelease") { throw "Неподдерживаемый channel у $slug: $channel" }
         if ($seenSlug.ContainsKey($slug)) { throw "Дублирующийся slug в каталоге: $slug" }
         if ($seenId.ContainsKey($extensionId)) { throw "Дублирующийся extension_id в каталоге: $extensionId" }
 
@@ -130,9 +130,23 @@ function Resolve-LatestSignedExtensionRelease($CatalogEntry, [string]$WorkingRoo
 
     if (-not (Test-ReleaseExtensionId $pinnedId)) { throw "Каталог содержит некорректный Extension ID: $slug" }
 
-    $release = Invoke-GitHubReleaseJson ("https://api.github.com/repos/" + $repo + "/releases/latest")
-    if ([bool](Get-ReleaseProperty $release "draft" $true)) { throw "Latest release неожиданно является draft." }
-    if ([bool](Get-ReleaseProperty $release "prerelease" $true)) { throw "Latest release неожиданно является prerelease." }
+    $channel = [string](Get-ReleaseProperty $CatalogEntry "channel" "stable")
+    if ($channel -ceq "stable") {
+        $release = Invoke-GitHubReleaseJson ("https://api.github.com/repos/" + $repo + "/releases/latest")
+        if ([bool](Get-ReleaseProperty $release "draft" $true)) { throw "Latest release неожиданно является draft." }
+        if ([bool](Get-ReleaseProperty $release "prerelease" $true)) { throw "Stable channel получил prerelease." }
+    }
+    elseif ($channel -ceq "prerelease") {
+        $releases = @(Invoke-GitHubReleaseJson ("https://api.github.com/repos/" + $repo + "/releases?per_page=20"))
+        $release = @($releases | Where-Object {
+            -not [bool](Get-ReleaseProperty $_ "draft" $true) -and [bool](Get-ReleaseProperty $_ "prerelease" $false)
+        } | Select-Object -First 1)
+        if ($release.Count -ne 1) { throw "Для prerelease channel не найден опубликованный prerelease." }
+        $release = $release[0]
+    }
+    else {
+        throw "Неподдерживаемый release channel: $channel"
+    }
 
     $descriptorAsset = Get-ReleaseAsset $release "extension-release.json"
     $releaseRoot = Join-Path $WorkingRoot ($slug + "-" + [Guid]::NewGuid().ToString("N"))
