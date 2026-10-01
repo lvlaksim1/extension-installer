@@ -49,6 +49,10 @@ jobs:
           }
 
           $guiPath = Resolve-Path '.\src\ExtensionInstaller.ps1'
+          $guiBytes = [IO.File]::ReadAllBytes($guiPath)
+          if ($guiBytes.Length -lt 3 -or $guiBytes[0] -ne 0xEF -or $guiBytes[1] -ne 0xBB -or $guiBytes[2] -ne 0xBF) {
+            throw 'ExtensionInstaller.ps1 must carry UTF-8 BOM for Windows PowerShell 5.1.'
+          }
           $gui = [IO.File]::ReadAllText($guiPath)
           [void][scriptblock]::Create($gui)
           foreach ($forbidden in @('ExtensionInstaller.cmd','FolderBrowserDialog','UniversalExtensionBuilder','RSA_PRIVATE_KEY')) {
