@@ -92,9 +92,17 @@ jobs:
           $catalog = Join-Path $installDir 'catalog\extensions.json'
           if (-not (Test-Path -LiteralPath $catalog -PathType Leaf)) { throw "Installed catalog missing: $catalog" }
 
-          # Re-run the same installer over the existing fixed-AppId installation.
-          # This verifies the update-in-place path does not create a separate copy.
+          # Simulate an obsolete file left by the previous legacy build, then
+          # run the same fixed-AppId installer over the existing installation.
+          $obsoleteCmd = Join-Path $installDir 'ExtensionInstaller.cmd'
+          Set-Content -LiteralPath $obsoleteCmd -Value 'obsolete legacy file' -Encoding ASCII
+          if (-not (Test-Path -LiteralPath $obsoleteCmd -PathType Leaf)) { throw 'Failed to seed obsolete CMD for upgrade test.' }
+
           Invoke-Setup $setup
+
+          if (Test-Path -LiteralPath $obsoleteCmd -PathType Leaf) {
+            throw 'Upgrade did not remove obsolete ExtensionInstaller.cmd.'
+          }
 
           $dataDir = Join-Path $env:LOCALAPPDATA 'ExtensionInstaller'
           New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
