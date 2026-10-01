@@ -20,3 +20,10 @@
 - status: accepted/active
 - source: owner directive
 - commitment: after the installer contract is defined, integrate Network Recorder as the first separately managed extension without silently changing its stable identity or chosen stable code baseline.
+
+
+## EI-PM-005 — make ExtensionInstaller installable on Windows
+- status: completed
+- source: owner directive
+- result: per-user Inno Setup package with fixed AppId, Start Menu launcher, optional desktop shortcut, direct GitHub prerelease publication, and no Actions artifact retention.
+- verification: Windows run 36897779451 successfully completed build, install, in-place reinstall, payload verification, uninstall, and prerelease publication.
