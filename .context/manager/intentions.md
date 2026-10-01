@@ -27,3 +27,9 @@
 - source: owner directive
 - result: per-user Inno Setup package with fixed AppId, Start Menu launcher, optional desktop shortcut, direct GitHub prerelease publication, and no Actions artifact retention.
 - verification: Windows run 36897779451 successfully completed build, install, in-place reinstall, payload verification, uninstall, and prerelease publication.
+
+
+## EI-PM-006 — coordinate the extension ecosystem
+- status: accepted/active
+- source: owner directive
+- commitment: manage the shared ExtensionInstaller + extension-repository integration from `extension-installer-project-manager` while extension repositories remain agentless unless the owner later assigns them their own manager.
