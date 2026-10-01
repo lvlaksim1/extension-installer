@@ -2,120 +2,86 @@
 
 ## B1 — repository and authority
 
-The active project repository is `lvlaksim1/extension-installer`; both product authority and manager-state authority are `main`.
-
-- source: `.context/manifest.json`
-- authority: verified-repository
-
-## B2 — baseline
-
-The retained local ExtensionInstaller v3.0.2 has been imported as `src/ExtensionInstaller.cmd` and is the migration baseline.
-
-- source: owner-provided file plus verified repository import
-- authority: owner-directive + verified-repository
-
-## B3 — ecosystem topology
-
-The owner selected separate repositories: one repository for ExtensionInstaller and a separate repository for each extension.
-
-- source: owner directive in current project initiation
-- authority: owner-directive
-
-## B4 — signing-key policy
-
-RSA private signing keys are not to be stored persistently on the owner's computer. Each extension's key is intended to live as a GitHub secret and be exposed only to its authorized signing workflow.
-
-- source: owner directive
-- authority: owner-directive
-
-## B5 — release/storage policy
-
-Build products should not accumulate in Git history or unnecessary Actions artifacts. Distributable files are intended to be placed directly in GitHub Releases.
-
-- source: owner directive
-- authority: owner-directive
-
-## B6 — installer target responsibility
-
-The target installer should consume already signed extension releases rather than own long-lived private signing keys or perform normal local signing.
-
-- source: owner-approved architecture derived from B3–B5
-- authority: manager-inference from owner-directive
-
-## B7 — legacy behavior
-
-The v3.0.2 baseline still contains local RSA-key/signing behavior. That behavior is historical baseline behavior, not the target trust architecture.
-
-- source: verified baseline source + owner-approved target architecture
-- authority: verified-repository + owner-directive
-
-
-## B8 — v3.0.2 signing boundary
-
-The v3.0.2 private-key dependency spans identity derivation, manifest-key injection, payload reconstruction and CRX3 generation; local RSA cannot be removed safely without replacing that whole input/trust path.
-
-- source: verified audit of `src/ExtensionInstaller.cmd`
-- authority: verified-repository
-
-## B9 — release engine validation
-
-A separate release-driven engine now performs release discovery, descriptor/SHA verification, CRX3 identity/signature verification, browser registration/update, rollback and uninstall without private-key handling. It passed Windows PowerShell 5.1 parse/C#-compile validation at commit `691d71fb524e6d0acc7a7fe7c7b01a4d7b4c5aa4`.
-
-- source: verified repository + GitHub Actions run on Windows
-- authority: verified-repository + verified-ci
-
-## B10 — migration boundary still open
-
-The existing GUI and normal v3.0.2 install button still invoke the legacy local ZIP/RSA path. Therefore the architectural migration is not complete and legacy signing code must not yet be deleted.
+The active repository is `lvlaksim1/extension-installer`; both product and manager-state authority are `main`.
 
 - source: verified repository
 - authority: verified-repository
 
+## B2 — clean product invariant
 
-## B11 — canonical extension name
+ExtensionInstaller now has one supported product path: catalog -> signed GitHub Release -> descriptor/SHA/CRX3 identity verification -> installer-owned local CRX/state -> Yandex Browser registration.
 
-The first browser extension in this ecosystem is canonically named **Network Recorder**. Repository names, release metadata, catalog entries, UI text and new documentation must use `Network Recorder`.
-
-- source: owner directive
-- authority: owner-directive
-
-
-
-## B12 — installable packaging
-
-ExtensionInstaller has a verified per-user Inno Setup packaging path with a fixed AppId. Windows CI verified install, reinstall over the existing installation, payload presence and uninstall. Preview `3.0.2-preview.3` is published directly as a GitHub prerelease asset with SHA-256 `e69d4db6dc0ac55124e46dbd301d13ffb0504d8bb1b14d3955586c56073e37bd`.
-
-- source: verified repository + successful Windows GitHub Actions run 36897779451
-- authority: verified-repository + verified-ci
-
-
-## B13 — uninstall data policy
-
-Interactive uninstall now asks whether the owner wants to remove ExtensionInstaller working data. Program removal and user-data removal are separate decisions: declining preserves `%LOCALAPPDATA%\ExtensionInstaller`, confirming removes it. Windows CI verified both preservation and explicit-cleanup branches in preview `3.0.2-preview.4`.
-
-- source: owner directive + verified repository + successful Windows CI
-- authority: owner-directive + verified-repository + verified-ci
-
-
-## B14 — Network Recorder repository governance
-
-`lvlaksim1/network-recorder` is a public, agentless extension repository created through repo-factory. The owner explicitly chose not to install a separate Project Manager there for now. Ecosystem coordination and onboarding responsibility remain with `extension-installer-project-manager`.
+The current product must not reintroduce local extension-source folder selection, local ZIP build/signing or local private-key handling.
 
 - source: owner directive + verified repository
 - authority: owner-directive + verified-repository
 
+## B3 — ecosystem topology
 
-## B15 — Network Recorder baseline imported
+ExtensionInstaller and every extension live in separate repositories. Extension repositories own their source, signing workflow and releases.
 
-The retained stable Network Recorder v1.6.0 archive with SHA-256 `eeb0cdfdf6323c96c6aea777ad9aed889522dc9de13e467b8f447723612e1db3` has been imported byte-for-byte into `lvlaksim1/network-recorder/src` through repo-factory. All five Git blob hashes match the retained archive. The manifest name is `Network Recorder`, version is `1.6.0`, and its public key derives Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`.
+- source: owner directive
+- authority: owner-directive
 
-- source: verified owner-retained archive + verified factory import
+## B4 — signing-key policy
+
+RSA private signing keys live only in the corresponding extension repository's GitHub secret scope and ephemeral signing runtime. ExtensionInstaller never needs the private key.
+
+- source: owner directive + verified Network Recorder signing workflow
+- authority: owner-directive + verified-ci
+
+## B5 — release/storage policy
+
+Distributable binaries belong in GitHub Releases, not normal Git history or retained Actions artifacts.
+
+- source: owner directive
+- authority: owner-directive
+
+## B6 — identity/integrity policy
+
+Catalog Extension ID is a trust anchor. Descriptor ID and CRX-derived ID must equal the catalog ID, and SHA-256 plus CRX3 signature must validate before registration.
+
+- source: verified release engine
+- authority: verified-repository + verified-ci
+
+## B7 — Network Recorder governance
+
+`lvlaksim1/network-recorder` is public and currently agentless. `extension-installer-project-manager` coordinates the shared extension ecosystem until the owner decides otherwise.
+
+- source: owner directive + verified repository
 - authority: owner-directive + verified-repository
 
+## B8 — Network Recorder verified signing
 
-## B15 — Network Recorder GitHub signing verified
+Network Recorder v1.6.0 is signed in GitHub Actions with secret `RSA_PRIVATE_KEY_BASE64`. Verified prerelease `network-recorder-v1.6.0-preview-1` preserves Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip` and has CRX SHA-256 `3516149ea638f6ff10626c1ae974c92627e220c1e86b5c5195abdea4700c26cf`.
 
-Network Recorder v1.6.0 is now signed entirely in GitHub Actions using repository secret `RSA_PRIVATE_KEY_BASE64`. The resulting CRX preserves Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`. Prerelease `network-recorder-v1.6.0-preview-1` has CRX SHA-256 `3516149ea638f6ff10626c1ae974c92627e220c1e86b5c5195abdea4700c26cf` and passed independent ExtensionInstaller-side CRX3 signature/identity/descriptor validation.
+- source: verified network-recorder workflow + independent ExtensionInstaller validation
+- authority: verified-ci
 
-- source: verified network-recorder workflow + verified extension-installer cross-validation workflow
+## B9 — installable application
+
+ExtensionInstaller uses a fixed Inno Setup AppId and per-user path `%LOCALAPPDATA%\Programs\ExtensionInstaller`. Upgrades replace the existing installation in place.
+
+- source: verified repository + Windows CI
+- authority: verified-repository + verified-ci
+
+## B10 — obsolete installed code cleanup
+
+The current setup explicitly deletes an obsolete `ExtensionInstaller.cmd` from an older installation. Windows CI simulated that stale file and verified its removal during in-place upgrade.
+
+- source: Windows CI run 36934806674
+- authority: verified-ci
+
+## B11 — uninstall data policy
+
+Interactive uninstall asks whether to remove `%LOCALAPPDATA%\ExtensionInstaller`. Declining preserves application data; confirming removes it. Silent uninstall preserves it unless the explicit CI/service cleanup switch is used.
+
+- source: owner directive + verified Windows CI
+- authority: owner-directive + verified-ci
+
+## B12 — current verified preview
+
+The current verified clean installer preview is `4.0.0-preview.10`, tag `installer-preview-10`, SHA-256 `9df7f12515cc856010760bcdcc921a36ab517cb63245e94f8d74f5179d696fbc`.
+
+- source: GitHub Release + successful Windows CI run 36934806674
 - authority: verified-ci + verified-repository
