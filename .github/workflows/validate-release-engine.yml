@@ -93,6 +93,22 @@ jobs:
           Remove-Item -LiteralPath $registryTestBase -Recurse -Force -ErrorAction SilentlyContinue
           Remove-Item -LiteralPath $registryTestCrx -Force -ErrorAction SilentlyContinue
 
+          $ownershipRoot = Join-Path $env:RUNNER_TEMP ('ownership-' + [Guid]::NewGuid().ToString('N'))
+          $ownershipPath = Join-Path $ownershipRoot 'ownership.json'
+          $ownershipState = [pscustomobject]@{
+            ExtensionId = $testId
+            Version = '1.6.0'
+            CrxPath = (Join-Path $ownershipRoot 'managed.crx')
+            SourceRepository = 'lvlaksim1/network-recorder'
+          }
+          $writtenOwnership = Write-ReleaseOwnershipMarker $ownershipPath $testId $ownershipState $null
+          if (-not (Test-Path -LiteralPath $ownershipPath -PathType Leaf)) { throw 'Ownership marker was not persisted.' }
+          $readOwnership = Read-ReleaseOwnershipMarker $ownershipPath
+          if ($null -eq $readOwnership -or [string]$readOwnership.ExtensionId -cne $testId -or [string]$readOwnership.LastVersion -cne '1.6.0') {
+            throw 'Ownership marker round-trip failed.'
+          }
+          Remove-Item -LiteralPath $ownershipRoot -Recurse -Force -ErrorAction SilentlyContinue
+
           $legacyPath = Join-Path (Join-Path (Join-Path (Join-Path $env:LOCALAPPDATA 'UniversalExtensionBuilder') 'projects') $testId) 'crx'
           $legacyProbe = [pscustomobject]@{ Path = (Join-Path $legacyPath 'legacy.crx'); Version = '1.6.0' }
           if (-not (Test-ReleaseLegacyYandexRegistration $legacyProbe $testId)) {
