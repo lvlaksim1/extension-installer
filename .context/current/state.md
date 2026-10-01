@@ -1,6 +1,6 @@
 # Current state
 
-Updated: 2026-10-02 01:24 MSK
+Updated: 2026-10-02 01:28 MSK
 
 - Repository: `lvlaksim1/extension-installer`.
 - Visibility: public.
@@ -27,10 +27,10 @@ Updated: 2026-10-02 01:24 MSK
 - Windows installer uses fixed AppId `79735245-B74E-5117-B1EF-A58BDC270FC7` and installs per-user under `%LOCALAPPDATA%\Programs\ExtensionInstaller`.
 - Upgrade explicitly removes obsolete `ExtensionInstaller.cmd` from an older installation.
 - Interactive uninstall asks whether to remove `%LOCALAPPDATA%\ExtensionInstaller`; declining preserves data, confirming removes it.
-- Current verified installer preview: `4.0.0-preview.10`.
-- Release tag: `installer-preview-10`.
-- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.10.exe`.
-- Setup SHA-256: `9df7f12515cc856010760bcdcc921a36ab517cb63245e94f8d74f5179d696fbc`.
-- Windows CI run `36934806674` passed clean GUI/catalog/release validation, real Network Recorder prerelease resolution and CRX verification, install, simulated upgrade cleanup of obsolete CMD, reinstall, both uninstall data-policy paths and direct prerelease publication.
+- Current verified installer preview: `4.0.0-preview.11`.
+- Release tag: `installer-preview-11`.
+- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.11.exe`.
+- Setup SHA-256: `32ad90c6951304c3a5698f8915de6fc69d21165dc77875625bf230cce77888e6`.
+- Windows CI run `36935180820` passed clean GUI/catalog/release validation, real Network Recorder prerelease resolution and CRX verification, install, simulated upgrade cleanup of obsolete CMD, reinstall, both uninstall data-policy paths and direct prerelease publication.
 - No GitHub Actions artifacts were retained.
 - Stable ExtensionInstaller publication has not been designated. Real owner-side Yandex Browser installation is the next gate.
