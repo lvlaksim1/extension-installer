@@ -66,6 +66,12 @@ function Invoke-GitHubReleaseJson([string]$Uri) {
         "User-Agent" = "ExtensionInstaller"
         "X-GitHub-Api-Version" = "2022-11-28"
     }
+
+    $optionalToken = [string]$env:EXTENSION_INSTALLER_GITHUB_TOKEN
+    if (-not [string]::IsNullOrWhiteSpace($optionalToken)) {
+        $headers["Authorization"] = "Bearer " + $optionalToken.Trim()
+    }
+
     return Invoke-RestMethod -Method Get -Uri $Uri -Headers $headers -UseBasicParsing -ErrorAction Stop
 }
 
