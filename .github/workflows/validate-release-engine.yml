@@ -33,11 +33,29 @@ jobs:
             ('{"extensions":{"external_uninstalls":["' + $testId + '","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]}}'),
             (New-Object Text.UTF8Encoding($false))
           )
+          $fakeSecurePreferences = Join-Path $fakeDefault 'Secure Preferences'
+          [IO.File]::WriteAllText(
+            $fakeSecurePreferences,
+            ('{"extensions":{"settings":{"' + $testId + '":{"manifest":{"version":"1.6.0"}}}}}'),
+            (New-Object Text.UTF8Encoding($false))
+          )
 
           $profileInstalls = @(Get-ReleaseYandexProfileInstallations $testId $fakeUserData)
           if ($profileInstalls.Count -ne 1 -or [string]$profileInstalls[0].Version -cne '1.6.0') {
             throw 'Browser-profile installation detection failed.'
           }
+
+          Remove-Item -LiteralPath $fakeSecurePreferences -Force
+          $staleDirectoryOnly = @(Get-ReleaseYandexProfileInstallations $testId $fakeUserData)
+          if ($staleDirectoryOnly.Count -ne 0) {
+            throw 'Stale extension directory was incorrectly treated as an installed browser extension.'
+          }
+
+          [IO.File]::WriteAllText(
+            $fakeSecurePreferences,
+            ('{"extensions":{"settings":{"' + $testId + '":{"manifest":{"version":"1.6.0"}}}}}'),
+            (New-Object Text.UTF8Encoding($false))
+          )
 
           $blockedProfiles = @(Get-ReleaseYandexExternalUninstallProfiles $testId $fakeUserData)
           if ($blockedProfiles.Count -ne 1) { throw 'External-uninstall detection failed.' }
@@ -57,6 +75,83 @@ jobs:
           if (@($prefsRestored.extensions.external_uninstalls | Where-Object { [string]$_ -ceq $testId }).Count -ne 1) {
             throw 'Preferences rollback failed.'
           }
+
+          $registryTestRoot = 'HKCU:\Software\ExtensionInstaller-CI-' + [Guid]::NewGuid().ToString('N') + '\Extensions'
+          $registryTestCrx = Join-Path $env:RUNNER_TEMP ('registry-pulse-' + [Guid]::NewGuid().ToString('N') + '.crx')
+          Set-Content -LiteralPath $registryTestCrx -Value 'fixture' -Encoding ASCII
+          New-Item -Path (Join-Path $registryTestRoot $testId) -Force | Out-Null
+          New-ItemProperty -LiteralPath (Join-Path $registryTestRoot $testId) -Name 'path' -PropertyType String -Value 'C:\old\legacy.crx' -Force | Out-Null
+          New-ItemProperty -LiteralPath (Join-Path $registryTestRoot $testId) -Name 'version' -PropertyType String -Value '1.5.0' -Force | Out-Null
+
+          $pulse = Set-ReleaseYandexRegistrationFresh -ExtensionId $testId -CrxPath $registryTestCrx -Version '1.6.0' -BaseKey $registryTestRoot -BrowserRunningOverride $true -PulseDelayMilliseconds 0
+          if (-not $pulse.HadRegistration -or -not $pulse.Pulsed) { throw 'Live registry re-registration pulse was not reported.' }
+          $pulseValues = Get-ItemProperty -LiteralPath (Join-Path $registryTestRoot $testId)
+          if ([string]$pulseValues.path -cne $registryTestCrx -or [string]$pulseValues.version -cne '1.6.0') {
+            throw 'Live registry re-registration pulse wrote incorrect values.'
+          }
+          Remove-Item -LiteralPath ($registryTestRoot -replace '\\Extensions Join-Path (Join-Path (Join-Path (Join-Path $env:LOCALAPPDATA 'UniversalExtensionBuilder') 'projects') $testId) 'crx'
+          $legacyProbe = [pscustomobject]@{ Path = (Join-Path $legacyPath 'legacy.crx'); Version = '1.6.0' }
+          if (-not (Test-ReleaseLegacyYandexRegistration $legacyProbe $testId)) {
+            throw 'Legacy ExtensionInstaller registration was not recognized.'
+          }
+          $foreignProbe = [pscustomobject]@{ Path = (Join-Path $env:RUNNER_TEMP 'foreign.crx'); Version = '1.6.0' }
+          if (Test-ReleaseLegacyYandexRegistration $foreignProbe $testId) {
+            throw 'Foreign registration was incorrectly recognized as legacy-owned.'
+          }
+          Remove-Item -LiteralPath $fakeUserData -Recurse -Force -ErrorAction SilentlyContinue
+
+          Initialize-Crx3PackageInspector
+          $catalog = Read-ExtensionCatalog '.\catalog\extensions.json'
+          if ($catalog.schema_version -ne 1) { throw 'Unexpected catalog schema version.' }
+
+          $source = [IO.File]::ReadAllText((Resolve-Path '.\src\ReleaseInstaller.ps1'))
+          foreach ($forbidden in @('RSA_PRIVATE_KEY.txt','ExportCspBlob(true)','LoadOrCreateKey(')) {
+            if ($source.Contains($forbidden)) { throw "Private-key behavior leaked into release engine: $forbidden" }
+          }
+
+          Write-Host 'RELEASE_ENGINE_VALID'
+
+      - name: Validate published Network Recorder prerelease
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          . .\src\ReleaseInstaller.ps1
+          Initialize-Crx3PackageInspector
+
+          $root = Join-Path $env:RUNNER_TEMP 'network-recorder-prerelease'
+          New-Item -ItemType Directory -Path $root -Force | Out-Null
+          $crx = Join-Path $root 'Network_Recorder_v1.6.0.crx'
+          $descriptorPath = Join-Path $root 'extension-release.json'
+
+          Invoke-WebRequest -UseBasicParsing -Uri 'https://github.com/lvlaksim1/network-recorder/releases/download/network-recorder-v1.6.0-preview-1/Network_Recorder_v1.6.0.crx' -OutFile $crx
+          Invoke-WebRequest -UseBasicParsing -Uri 'https://github.com/lvlaksim1/network-recorder/releases/download/network-recorder-v1.6.0-preview-1/extension-release.json' -OutFile $descriptorPath
+
+          $descriptor = Read-ExtensionReleaseDescriptor $descriptorPath
+          if ([string]$descriptor.slug -cne 'network-recorder') { throw 'Unexpected slug.' }
+          if ([string]$descriptor.version -cne '1.6.0') { throw 'Unexpected version.' }
+          if ([string]$descriptor.extension_id -cne 'paolfcaakecapidipfcfbbhgkpcmgcip') { throw 'Descriptor Extension ID mismatch.' }
+
+          $actualSha = Get-ReleaseFileSha256 $crx
+          if ($actualSha -cne ([string]$descriptor.crx_sha256).ToLowerInvariant()) { throw 'Published CRX SHA-256 mismatch.' }
+
+          $inspection = [Crx3PackageInspector]::Inspect($crx)
+          if (-not $inspection.SignatureValid) { throw 'Published CRX3 signature invalid.' }
+          if ([string]$inspection.ExtensionId -cne 'paolfcaakecapidipfcfbbhgkpcmgcip') { throw 'Published CRX Extension ID mismatch.' }
+
+          Write-Host ('NETWORK_RECORDER_RELEASE_VALID ID=' + $inspection.ExtensionId + ' SHA256=' + $actualSha)
+
+      - name: Report
+        if: always()
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          RESULT: ${{ job.status }}
+        run: |
+          if ($env:RESULT -eq 'success') { $body = 'RELEASE_ENGINE_VALID' } else { $body = 'RELEASE_ENGINE_INVALID' }
+          gh api --method POST "repos/$env:GITHUB_REPOSITORY/issues/$env:ISSUE_NUMBER/comments" -f body="$body"
+,'') -Recurse -Force -ErrorAction SilentlyContinue
+          Remove-Item -LiteralPath $registryTestCrx -Force -ErrorAction SilentlyContinue
 
           $legacyPath = Join-Path (Join-Path (Join-Path (Join-Path $env:LOCALAPPDATA 'UniversalExtensionBuilder') 'projects') $testId) 'crx'
           $legacyProbe = [pscustomobject]@{ Path = (Join-Path $legacyPath 'legacy.crx'); Version = '1.6.0' }
