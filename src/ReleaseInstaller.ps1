@@ -1,4 +1,4 @@
-# Release-driven extension acquisition for ExtensionInstaller.
+﻿# Release-driven extension acquisition for ExtensionInstaller.
 # Windows PowerShell 5.1 compatible. This module intentionally contains no private-key handling.
 
 $ErrorActionPreference = "Stop"
