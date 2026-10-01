@@ -48,6 +48,42 @@ jobs:
 
           Write-Host "SETUP_VALID $setup"
 
+      - name: Smoke-test install, in-place reinstall, and uninstall
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $setup = '${{ steps.build.outputs.setup_path }}'
+          $installDir = Join-Path $env:LOCALAPPDATA 'Programs\ExtensionInstaller'
+
+          function Invoke-Setup([string]$PathValue) {
+            $p = Start-Process -FilePath $PathValue -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') -Wait -PassThru
+            if ($p.ExitCode -ne 0) { throw "Setup failed with exit code $($p.ExitCode)." }
+          }
+
+          Invoke-Setup $setup
+
+          foreach ($name in @('ExtensionInstaller.cmd','ExtensionInstaller.vbs','ReleaseInstaller.ps1')) {
+            $path = Join-Path $installDir $name
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Installed file missing: $path" }
+          }
+          $catalog = Join-Path $installDir 'catalog\extensions.json'
+          if (-not (Test-Path -LiteralPath $catalog -PathType Leaf)) { throw "Installed catalog missing: $catalog" }
+
+          # Re-run the same installer over the existing fixed-AppId installation.
+          # This verifies the update-in-place path does not create a separate copy.
+          Invoke-Setup $setup
+
+          $uninstaller = Join-Path $installDir 'unins000.exe'
+          if (-not (Test-Path -LiteralPath $uninstaller -PathType Leaf)) { throw "Uninstaller missing: $uninstaller" }
+          $u = Start-Process -FilePath $uninstaller -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') -Wait -PassThru
+          if ($u.ExitCode -ne 0) { throw "Uninstaller failed with exit code $($u.ExitCode)." }
+
+          foreach ($name in @('ExtensionInstaller.cmd','ExtensionInstaller.vbs','ReleaseInstaller.ps1')) {
+            if (Test-Path -LiteralPath (Join-Path $installDir $name) -PathType Leaf) { throw "Installed file remained after uninstall: $name" }
+          }
+
+          Write-Host 'INSTALL_REINSTALL_UNINSTALL_SMOKE_VALID'
+
       - name: Publish prerelease directly
         id: release
         shell: powershell
