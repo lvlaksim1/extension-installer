@@ -1,0 +1,17 @@
+# Private signing material
+RSA_PRIVATE_KEY.txt
+*.pem
+*.key
+
+# Build/package outputs
+*.crx
+*.zip
+build/
+dist/
+out/
+
+# Runtime/local state
+*.log
+.env
+.env.*
+settings.local.json
