@@ -48,3 +48,25 @@ The v3.0.2 baseline still contains local RSA-key/signing behavior. That behavior
 
 - source: verified baseline source + owner-approved target architecture
 - authority: verified-repository + owner-directive
+
+
+## B8 — v3.0.2 signing boundary
+
+The v3.0.2 private-key dependency spans identity derivation, manifest-key injection, payload reconstruction and CRX3 generation; local RSA cannot be removed safely without replacing that whole input/trust path.
+
+- source: verified audit of `src/ExtensionInstaller.cmd`
+- authority: verified-repository
+
+## B9 — release engine validation
+
+A separate release-driven engine now performs release discovery, descriptor/SHA verification, CRX3 identity/signature verification, browser registration/update, rollback and uninstall without private-key handling. It passed Windows PowerShell 5.1 parse/C#-compile validation at commit `691d71fb524e6d0acc7a7fe7c7b01a4d7b4c5aa4`.
+
+- source: verified repository + GitHub Actions run on Windows
+- authority: verified-repository + verified-ci
+
+## B10 — migration boundary still open
+
+The existing GUI and normal v3.0.2 install button still invoke the legacy local ZIP/RSA path. Therefore the architectural migration is not complete and legacy signing code must not yet be deleted.
+
+- source: verified repository
+- authority: verified-repository
