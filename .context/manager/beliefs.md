@@ -88,11 +88,11 @@ Interactive uninstall asks whether to remove `%LOCALAPPDATA%\ExtensionInstaller`
 
 ## B13 — current verified preview
 
-The current verified clean installer preview is `4.0.0-preview.22`, tag `installer-preview-22`, SHA-256 `e401fc5ed03fbd5a6dead9beb243a8947f33466a6bdb7d03e8caf503d0b29dcf`.
+The current verified clean installer preview is `4.0.0-preview.24`, tag `installer-preview-24`, SHA-256 `36f28f2e2bb814b0c7cf77c45b73f0f74cb3dda105bb60a04fb0f2571652e140`.
 
-It supersedes preview.16 as the owner-test candidate because preview.22 restores no-restart hot registration into a running Yandex Browser and rejects stale extension directories as proof of installed state.
+It supersedes preview.22 as the owner-test candidate because it keeps no-restart hot registration and adds a browser-owned `browser://tune` + selected verified CRX fallback for user-removed/blocklisted or otherwise not-live-loaded external extensions.
 
-- source: owner runtime evidence + GitHub Release + successful Windows validation/build runs `36941205548` and `36941269628`
+- source: owner runtime evidence + GitHub Release + successful Windows validation/build runs `36942756644` and `36942832970`
 - authority: owner-runtime-evidence + verified-ci + verified-repository
 
 ## B14 — current release gate
@@ -124,3 +124,10 @@ The owner requires ExtensionInstaller install/reinstall to work without restarti
 
 - source: owner directive + Chromium registry-loader behavior + verified implementation/CI
 - authority: owner-directive + verified-repository + verified-ci
+
+## B18 — user-removed external extensions need browser-owned reactivation
+
+A user removal performed in Yandex Browser is stronger than absence of an external registry entry: the browser can remember that removal and decline a subsequent external registration. ExtensionInstaller must not silently override that browser-owned decision by editing live profile Preferences. Preview.24 therefore attempts normal hot registration first, then—when the extension was user-removed or still is not present in browser profile state—opens `browser://tune` and selects the exact verified CRX so the user can confirm installation in the running browser without restart.
+
+- source: owner directive + owner runtime observation + browser external-extension semantics + verified implementation/CI
+- authority: owner-directive + owner-runtime-evidence + verified-repository + verified-ci
