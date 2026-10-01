@@ -1,5 +1,5 @@
 #ifndef MyAppVersion
-  #define MyAppVersion "3.0.2-preview"
+  #define MyAppVersion "4.0.0-preview"
 #endif
 
 #define MyAppName "ExtensionInstaller"
@@ -35,10 +35,13 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 
 [Files]
-Source: "..\src\ExtensionInstaller.cmd"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\src\ExtensionInstaller.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\src\ReleaseInstaller.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\src\ExtensionInstaller.vbs"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\catalog\extensions.json"; DestDir: "{app}\catalog"; Flags: ignoreversion
+
+[InstallDelete]
+Type: files; Name: "{app}\ExtensionInstaller.cmd"
 
 [Icons]
 Name: "{autoprograms}\ExtensionInstaller"; Filename: "{sys}\wscript.exe"; Parameters: """{app}\ExtensionInstaller.vbs"""; WorkingDir: "{app}"
