@@ -85,8 +85,10 @@ function Get-InstallSnapshot {
     $extensionRoot = Join-Path $script:InstallRoot $extensionId
     $crxRoot = Join-Path $extensionRoot "crx"
     $statePath = Join-Path $extensionRoot "state.json"
+    $ownershipPath = Join-Path $extensionRoot "ownership.json"
 
     $state = Read-ReleaseInstallState $statePath
+    $ownership = Read-ReleaseOwnershipMarker $ownershipPath
     $yandex = Get-ReleaseYandexValues $extensionId
     $browserInstallations = @(Get-ReleaseYandexProfileInstallations $extensionId)
     $externalUninstallProfiles = @(Get-ReleaseYandexExternalUninstallProfiles $extensionId)
@@ -99,6 +101,8 @@ function Get-InstallSnapshot {
     $legacy = ($null -ne $yandex -and (Test-ReleaseLegacyYandexRegistration $yandex $extensionId))
     $foreign = $false
     $managed = $false
+    $browserOnly = $false
+    $removedByInstaller = $false
     $installedVersion = ""
 
     if ($browserInstalled) {
@@ -122,24 +126,44 @@ function Get-InstallSnapshot {
     }
     elseif ($null -ne $state) { $managed = $true }
 
-    if ($browserInstalled -and $null -eq $yandex -and $null -eq $state) { $foreign = $true }
+    # A browser-profile entry with the trusted catalog Extension ID but no external
+    # registry/state is not a "foreign registration". It can be a residual entry after
+    # our own live uninstall or a browser-managed installation of the same signed ID.
+    if ($browserInstalled -and $null -eq $yandex -and $null -eq $state) {
+        $browserOnly = $true
+    }
+
+    if ($null -ne $ownership -and $null -eq $state) {
+        $markerId = [string](Get-ReleaseProperty $ownership "ExtensionId" "")
+        $markerVersion = [string](Get-ReleaseProperty $ownership "LastVersion" "")
+        if ($markerId -ceq $extensionId) {
+            if (-not $browserInstalled -or [string]::IsNullOrWhiteSpace($markerVersion) -or $installedVersion -ceq $markerVersion) {
+                $removedByInstaller = $true
+                $foreign = $false
+            }
+        }
+    }
 
     return [pscustomobject]@{
         ExtensionId = $extensionId
         ExtensionRoot = $extensionRoot
         CrxRoot = $crxRoot
         State = $state
+        Ownership = $ownership
         Yandex = $yandex
         BrowserInstallations = $browserInstallations
         BrowserInstalled = $browserInstalled
         BrowserProfileCount = @($browserInstallations | Select-Object -ExpandProperty Profile -Unique).Count
         RemovedByUser = $removedByUser
+        RemovedByInstaller = $removedByInstaller
+        BrowserOnly = $browserOnly
         ExternalUninstallProfileCount = $externalUninstallProfiles.Count
         Managed = $managed
         Legacy = $legacy
         Foreign = $foreign
         InstalledVersion = $installedVersion
         HasState = ($null -ne $state)
+        HasOwnership = ($null -ne $ownership)
         HasRegistry = ($null -ne $yandex)
     }
 }
@@ -180,7 +204,7 @@ function Update-UiFromState {
     )
 
     $snapshot = Get-InstallSnapshot $Entry
-    $script:InstalledVersionValue.Text = if ([string]::IsNullOrWhiteSpace($snapshot.InstalledVersion)) { "—" } else { $snapshot.InstalledVersion }
+    $script:InstalledVersionValue.Text = if ($snapshot.RemovedByInstaller -or [string]::IsNullOrWhiteSpace($snapshot.InstalledVersion)) { "—" } else { $snapshot.InstalledVersion }
 
     $availableVersion = ""
     if ($null -ne $script:ResolvedRelease) { $availableVersion = [string](Get-ReleaseProperty $script:ResolvedRelease "Version" "") }
@@ -189,6 +213,22 @@ function Update-UiFromState {
         Set-StatusText "Обнаружена сторонняя установка/регистрация с этим Extension ID" "Warn"
         $script:InstallButton.Text = "Установить"
         $script:InstallButton.Enabled = $false
+        $script:UninstallButton.Enabled = $false
+        return
+    }
+
+    if ($snapshot.RemovedByInstaller) {
+        Set-StatusText "Удалено через ExtensionInstaller; можно установить снова без перезапуска браузера" "Warn"
+        $script:InstallButton.Text = "Установить снова"
+        $script:InstallButton.Enabled = ($null -ne $script:ResolvedRelease)
+        $script:UninstallButton.Enabled = $false
+        return
+    }
+
+    if ($snapshot.BrowserOnly) {
+        Set-StatusText "Расширение есть в профиле Яндекс.Браузера без регистрации ExtensionInstaller" "Warn"
+        $script:InstallButton.Text = "Подключить / переустановить"
+        $script:InstallButton.Enabled = ($null -ne $script:ResolvedRelease)
         $script:UninstallButton.Enabled = $false
         return
     }
@@ -397,8 +437,8 @@ function Uninstall-SelectedExtension {
     Set-Busy $true
     try {
         $extensionId = [string](Get-ReleaseProperty $entry "extension_id" "")
-        Uninstall-ReleaseExtension $extensionId $script:InstallRoot | Out-Null
-        Write-AppLog ("Расширение удалено: " + $name + "; id=" + $extensionId)
+        $result = Uninstall-ReleaseExtension $extensionId $script:InstallRoot
+        Write-AppLog ("Расширение удалено: " + $name + "; id=" + $extensionId + "; browser_running=" + [bool](Get-ReleaseProperty $result "BrowserWasRunning" $false) + "; ownership_marker=" + [string](Get-ReleaseProperty $result "OwnershipPath" ""))
     }
     catch {
         Write-AppLog $_.Exception.Message "ERROR"
