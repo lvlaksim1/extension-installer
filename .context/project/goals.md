@@ -1,8 +1,10 @@
 # Project goals
 
-1. Preserve the known working ExtensionInstaller v3.0.2 baseline.
-2. Evolve the installer from local ZIP + local RSA signing toward installation of already signed extension releases.
-3. Keep each browser extension in a separate repository with independent versioning and releases.
-4. Preserve stable extension IDs across migrations.
-5. Keep RSA private keys out of local persistent storage and out of Git history; signing is intended to run in GitHub Actions using repository/environment secrets.
-6. Avoid unnecessary GitHub Actions artifacts and large binary files in repository history.
+1. Provide a clean Windows GUI for installing, updating and removing approved browser extensions from signed GitHub Releases.
+2. Keep each extension in a separate repository with independent source, versioning, signing and releases.
+3. Preserve extension identity by pinning and verifying stable Extension IDs.
+4. Keep RSA private keys out of the owner's persistent local installation and out of Git history.
+5. Verify release metadata, SHA-256, CRX3 signature and Extension ID before registration.
+6. Make ExtensionInstaller itself installable/updatable in place with one setup EXE.
+7. Avoid unnecessary GitHub Actions artifacts and binary files in normal Git history.
+8. Keep the extension ecosystem coordinated by `extension-installer-project-manager` until the owner assigns separate managers.
