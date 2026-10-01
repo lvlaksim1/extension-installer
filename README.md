@@ -33,3 +33,18 @@ The installer repository contains only the installer/update manager. The target 
 3. Define the extension catalog/release contract.
 4. Adapt ExtensionInstaller to consume signed releases.
 5. Migrate existing extensions one by one without changing stable extension IDs.
+
+
+## Windows installation
+
+ExtensionInstaller is packaged as a per-user Windows installer using Inno Setup.
+
+- fixed AppId: subsequent installer versions update the existing installation in place;
+- install path: `%LOCALAPPDATA%\Programs\ExtensionInstaller`;
+- no administrator rights are required for the default installation;
+- Start Menu shortcut is created; desktop shortcut is optional;
+- application/runtime state under `%LOCALAPPDATA%\ExtensionInstaller` is separate from installed program files;
+- distributable setup EXEs are published directly in GitHub Releases;
+- GitHub Actions artifacts are not used for installer distribution.
+
+The current installable build is a prerelease while the GUI is still being migrated from the legacy local ZIP/RSA workflow to the signed-release workflow.
