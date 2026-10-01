@@ -9,7 +9,7 @@ scriptPath = fso.BuildPath(appDir, "ExtensionInstaller.ps1")
 powershellPath = shell.ExpandEnvironmentStrings("%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe")
 
 If Not fso.FileExists(scriptPath) Then
-    MsgBox "ExtensionInstaller.ps1 не найден: " & scriptPath, vbCritical, "ExtensionInstaller"
+    MsgBox "ExtensionInstaller.ps1 not found: " & scriptPath, vbCritical, "ExtensionInstaller"
     WScript.Quit 2
 End If
 
