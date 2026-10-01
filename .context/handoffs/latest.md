@@ -9,10 +9,12 @@
 
 ## Verified baseline
 
-- ExtensionInstaller v3.0.2 is imported at `src/ExtensionInstaller.cmd`.
-- The repository is public and was created via `lvlaksim1/repo-factory`.
-- Project Manager v2 Core commit: `7aa1e697504e686b02a4d7f1539a157214d5e692`.
-- No signing private key is committed to the repository.
+- ExtensionInstaller v3.0.2 is preserved at `src/ExtensionInstaller.cmd`.
+- Functional audit: `docs/V3.0.2_FUNCTIONAL_AUDIT.md`.
+- Release contract v1: `docs/EXTENSION_RELEASE_CONTRACT.md`.
+- New release engine: `src/ReleaseInstaller.ps1`.
+- Current validated release-engine commit: `691d71fb524e6d0acc7a7fe7c7b01a4d7b4c5aa4`.
+- Windows PowerShell 5.1 validation passed; no workflow artifacts are created.
 
 ## Owner-approved architecture
 
@@ -23,6 +25,10 @@
 - unnecessary Actions artifacts must not accumulate;
 - stable extension IDs must be preserved.
 
+## Migration state
+
+The new engine can resolve and verify signed releases and owns the new registration/update/rollback/uninstall path without private keys. The old GUI still invokes the v3.0.2 local ZIP/RSA path. Do not delete the legacy signing path until the release engine is connected to the GUI and a real extension release passes an end-to-end Yandex Browser test.
+
 ## Active commitments
 
 - EI-PM-002: migrate installer architecture to signed-release consumption.
@@ -31,4 +37,4 @@
 
 ## Resume point
 
-Audit `src/ExtensionInstaller.cmd` by responsibility, then define the installer-to-extension release contract before modifying the installation path.
+Integrate the validated release engine into the GUI, then create/onboard EINV Network Recorder as the first signed-release producer.
