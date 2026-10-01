@@ -60,6 +60,54 @@ jobs:
           }
 
           . .\src\ReleaseInstaller.ps1
+
+          $testId = 'paolfcaakecapidipfcfbbhgkpcmgcip'
+          $fakeUserData = Join-Path $env:RUNNER_TEMP ('fake-yandex-' + [Guid]::NewGuid().ToString('N'))
+          $fakeDefault = Join-Path $fakeUserData 'Default'
+          $fakeExtension = Join-Path (Join-Path (Join-Path $fakeDefault 'Extensions') $testId) '1.6.0_0'
+          New-Item -ItemType Directory -Path $fakeExtension -Force | Out-Null
+          $fakePreferences = Join-Path $fakeDefault 'Preferences'
+          [IO.File]::WriteAllText(
+            $fakePreferences,
+            ('{"extensions":{"external_uninstalls":["' + $testId + '","aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"]}}'),
+            (New-Object Text.UTF8Encoding($false))
+          )
+
+          $profileInstalls = @(Get-ReleaseYandexProfileInstallations $testId $fakeUserData)
+          if ($profileInstalls.Count -ne 1 -or [string]$profileInstalls[0].Version -cne '1.6.0') {
+            throw 'Browser-profile installation detection failed.'
+          }
+
+          $blockedProfiles = @(Get-ReleaseYandexExternalUninstallProfiles $testId $fakeUserData)
+          if ($blockedProfiles.Count -ne 1) { throw 'External-uninstall detection failed.' }
+
+          $prefBackups = @(Remove-ReleaseYandexExternalUninstallMarker $testId $fakeUserData)
+          if ($prefBackups.Count -ne 1) { throw 'External-uninstall marker was not cleared.' }
+          $prefsAfter = [IO.File]::ReadAllText($fakePreferences) | ConvertFrom-Json
+          if (@($prefsAfter.extensions.external_uninstalls | Where-Object { [string]$_ -ceq $testId }).Count -ne 0) {
+            throw 'Target external-uninstall marker remained.'
+          }
+          if (@($prefsAfter.extensions.external_uninstalls | Where-Object { [string]$_ -ceq 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }).Count -ne 1) {
+            throw 'Unrelated external-uninstall marker was modified.'
+          }
+
+          Restore-ReleaseYandexPreferenceBackups $prefBackups
+          $prefsRestored = [IO.File]::ReadAllText($fakePreferences) | ConvertFrom-Json
+          if (@($prefsRestored.extensions.external_uninstalls | Where-Object { [string]$_ -ceq $testId }).Count -ne 1) {
+            throw 'Preferences rollback failed.'
+          }
+
+          $legacyPath = Join-Path (Join-Path (Join-Path (Join-Path $env:LOCALAPPDATA 'UniversalExtensionBuilder') 'projects') $testId) 'crx'
+          $legacyProbe = [pscustomobject]@{ Path = (Join-Path $legacyPath 'legacy.crx'); Version = '1.6.0' }
+          if (-not (Test-ReleaseLegacyYandexRegistration $legacyProbe $testId)) {
+            throw 'Legacy ExtensionInstaller registration was not recognized.'
+          }
+          $foreignProbe = [pscustomobject]@{ Path = (Join-Path $env:RUNNER_TEMP 'foreign.crx'); Version = '1.6.0' }
+          if (Test-ReleaseLegacyYandexRegistration $foreignProbe $testId) {
+            throw 'Foreign registration was incorrectly recognized as legacy-owned.'
+          }
+          Remove-Item -LiteralPath $fakeUserData -Recurse -Force -ErrorAction SilentlyContinue
+
           $catalog = Read-ExtensionCatalog '.\catalog\extensions.json'
           if (@($catalog.extensions).Count -ne 1) { throw 'Expected Network Recorder catalog entry.' }
           $entry = @($catalog.extensions)[0]
