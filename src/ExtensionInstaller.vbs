@@ -1,16 +1,18 @@
 Option Explicit
 
-Dim shell, fso, appDir, cmdPath
+Dim shell, fso, appDir, scriptPath, powershellPath, command
 Set shell = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
 
 appDir = fso.GetParentFolderName(WScript.ScriptFullName)
-cmdPath = fso.BuildPath(appDir, "ExtensionInstaller.cmd")
+scriptPath = fso.BuildPath(appDir, "ExtensionInstaller.ps1")
+powershellPath = shell.ExpandEnvironmentStrings("%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe")
 
-If Not fso.FileExists(cmdPath) Then
-    MsgBox "ExtensionInstaller.cmd не найден: " & cmdPath, vbCritical, "ExtensionInstaller"
+If Not fso.FileExists(scriptPath) Then
+    MsgBox "ExtensionInstaller.ps1 не найден: " & scriptPath, vbCritical, "ExtensionInstaller"
     WScript.Quit 2
 End If
 
 shell.CurrentDirectory = appDir
-shell.Run """" & cmdPath & """", 0, False
+command = """" & powershellPath & """ -NoProfile -STA -ExecutionPolicy Bypass -WindowStyle Hidden -File """ & scriptPath & """"
+shell.Run command, 0, False
