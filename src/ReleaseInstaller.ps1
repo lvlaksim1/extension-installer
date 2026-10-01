@@ -333,6 +333,59 @@ function Test-ReleaseYandexBrowserRunning {
     return $false
 }
 
+
+function Get-ReleaseYandexBrowserExecutablePath {
+    foreach ($process in @(Get-Process -Name "browser" -ErrorAction SilentlyContinue)) {
+        try {
+            $path = [string]$process.Path
+            if (-not [string]::IsNullOrWhiteSpace($path) -and
+                $path.IndexOf("\Yandex\YandexBrowser\", [System.StringComparison]::OrdinalIgnoreCase) -ge 0 -and
+                (Test-Path -LiteralPath $path -PathType Leaf)) {
+                return $path
+            }
+        }
+        catch { }
+    }
+
+    $candidates = @(
+        (Join-Path $env:LOCALAPPDATA "Yandex\YandexBrowser\Application\browser.exe"),
+        $(if (-not [string]::IsNullOrWhiteSpace($env:ProgramFiles)) { Join-Path $env:ProgramFiles "Yandex\YandexBrowser\Application\browser.exe" } else { "" }),
+        $(if (-not [string]::IsNullOrWhiteSpace(\${env:ProgramFiles(x86)})) { Join-Path \${env:ProgramFiles(x86)} "Yandex\YandexBrowser\Application\browser.exe" } else { "" })
+    )
+
+    foreach ($candidate in $candidates) {
+        if (-not [string]::IsNullOrWhiteSpace([string]$candidate) -and (Test-Path -LiteralPath $candidate -PathType Leaf)) {
+            return [string]$candidate
+        }
+    }
+    return ""
+}
+
+function Open-ReleaseYandexTunePage {
+    $browserPath = Get-ReleaseYandexBrowserExecutablePath
+    if ([string]::IsNullOrWhiteSpace($browserPath)) { return $false }
+
+    try {
+        Start-Process -FilePath $browserPath -ArgumentList "browser://tune/" -ErrorAction Stop | Out-Null
+        return $true
+    }
+    catch { return $false }
+}
+
+function Show-ReleaseCrxInExplorer {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$CrxPath
+    )
+
+    if (-not (Test-Path -LiteralPath $CrxPath -PathType Leaf)) { return $false }
+    try {
+        Start-Process -FilePath "explorer.exe" -ArgumentList ('/select,"' + $CrxPath + '"') -ErrorAction Stop | Out-Null
+        return $true
+    }
+    catch { return $false }
+}
+
 function Restore-ReleaseYandexPreferenceBackups($Backups) {
     foreach ($backup in @($Backups)) {
         $path = [string](Get-ReleaseProperty $backup "Path" "")
