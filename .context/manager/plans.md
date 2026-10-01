@@ -1,6 +1,6 @@
 # Manager plans
 
-1. Owner installs clean preview `4.0.0-preview.10` over the currently installed ExtensionInstaller.
+1. Owner installs clean preview `4.0.0-preview.11` over the currently installed ExtensionInstaller.
 2. Verify the old folder/ZIP UI and obsolete installed CMD are gone on the owner's PC.
 3. Use the new catalog GUI to resolve and install Network Recorder v1.6.0 from its signed GitHub prerelease.
 4. Verify actual Yandex Browser registration, Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`, extension startup and normal Network Recorder behavior.
