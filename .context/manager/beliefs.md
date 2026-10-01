@@ -88,11 +88,11 @@ Interactive uninstall asks whether to remove `%LOCALAPPDATA%\ExtensionInstaller`
 
 ## B13 — current verified preview
 
-The current verified clean installer preview is `4.0.0-preview.16`, tag `installer-preview-16`, SHA-256 `d45731e08cd543b131ea19940bfa8110698ddefdd0cc3ee222597edd359f7fed`.
+The current verified clean installer preview is `4.0.0-preview.22`, tag `installer-preview-22`, SHA-256 `e401fc5ed03fbd5a6dead9beb243a8947f33466a6bdb7d03e8caf503d0b29dcf`.
 
-It supersedes preview.14 as the owner-test candidate because preview.16 additionally treats the Yandex `external_uninstalls` marker as authoritative over stale profile extension directories.
+It supersedes preview.16 as the owner-test candidate because preview.22 restores no-restart hot registration into a running Yandex Browser and rejects stale extension directories as proof of installed state.
 
-- source: owner runtime evidence + GitHub Release + successful Windows validation/build runs `36938925514` and `36938989331`
+- source: owner runtime evidence + GitHub Release + successful Windows validation/build runs `36941205548` and `36941269628`
 - authority: owner-runtime-evidence + verified-ci + verified-repository
 
 ## B14 — current release gate
@@ -117,3 +117,10 @@ The prior ExtensionInstaller stored registered CRX files under `%LOCALAPPDATA%\U
 
 - source: verified v3 source + current migration implementation
 - authority: verified-repository
+
+## B17 — hot external registration is required
+
+The owner requires ExtensionInstaller install/reinstall to work without restarting Yandex Browser, matching the practical behavior of the earlier installer. Chromium/Yandex watches the external-extension registry branch while running. For an ExtensionInstaller-owned existing registration, preview.22 intentionally removes the child key, waits briefly, then recreates it with the verified CRX path/version so the live watcher observes a fresh registration. While the browser is running, ExtensionInstaller does not edit its Preferences file directly.
+
+- source: owner directive + Chromium registry-loader behavior + verified implementation/CI
+- authority: owner-directive + verified-repository + verified-ci
