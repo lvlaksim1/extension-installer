@@ -19,14 +19,14 @@
 ## EI-PM-004 — integrate Network Recorder
 - status: active; corrected real-browser migration/reinstall retest pending
 - source: owner directive
-- result so far: Network Recorder v1.6.0 source is in its own public repository, signing secret is GitHub-hosted, signed prerelease preserves the original Extension ID, catalog entry is active, and ExtensionInstaller resolves/verifies it successfully. Owner-side preview.11 testing exposed a legacy-registration/manual-browser-removal defect; preview.16 contains the final CI-verified correction, including external-uninstall-marker precedence over stale profile directories.
-- remaining: owner-side preview.16 Yandex Browser reinstall/function verification, then a real later-version update test.
+- result so far: Network Recorder v1.6.0 source is in its own public repository, signing secret is GitHub-hosted, signed prerelease preserves the original Extension ID, catalog entry is active, and ExtensionInstaller resolves/verifies it successfully. Owner-side preview.11 testing exposed a legacy-registration/manual-browser-removal defect; preview.22 contains the current CI-verified correction, including authoritative profile-state detection and no-restart live registry re-registration.
+- remaining: owner-side preview.22 no-restart Yandex Browser reinstall/function verification, then a real later-version update test.
 
 ## EI-PM-005 — make ExtensionInstaller installable/updatable
 - status: completed
 - source: owner directive
 - result: single Inno Setup EXE, fixed AppId, per-user installation, in-place update, obsolete installed CMD cleanup, optional removal of application data on uninstall.
-- current verified setup: `4.0.0-preview.16`; build run `36938989331`.
+- current verified setup: `4.0.0-preview.22`; build run `36941269628`.
 
 ## EI-PM-006 — coordinate extension ecosystem
 - status: active
