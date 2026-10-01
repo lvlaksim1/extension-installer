@@ -39,3 +39,10 @@
 - Public extension repository `lvlaksim1/network-recorder` was created through `lvlaksim1/repo-factory` using the agentless `infrastructure` profile.
 - Network Recorder currently has no Project Manager / Context Capsule. Ecosystem coordination remains with `extension-installer-project-manager`.
 - The Network Recorder repository has repository-level signing/release policy documented and a `.gitignore` that excludes RSA/private-key material and CRX/ZIP build outputs.
+
+- Network Recorder v1.6.0 source was imported byte-for-byte into `lvlaksim1/network-recorder/src` through `repo-factory`.
+- Authoritative retained source archive SHA-256: `eeb0cdfdf6323c96c6aea777ad9aed889522dc9de13e467b8f447723612e1db3`.
+- Factory import commit: `db1993a63c08beb1a7b7353f1bfe49419d6bafde`; README follow-up commit: `5dd717080a60b06747cc266553f9e880745d8c79`.
+- Git blob hashes for all five imported files were compared against the retained ZIP and matched byte-for-byte.
+- Imported manifest confirms canonical name `Network Recorder`, version `1.6.0`, and the existing public key derives Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`.
+- No private signing key is committed to `network-recorder`.
