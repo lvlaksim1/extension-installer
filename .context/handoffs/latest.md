@@ -33,8 +33,8 @@ The new engine can resolve and verify signed releases and owns the new registrat
 
 - EI-PM-002: migrate installer architecture to signed-release consumption.
 - EI-PM-003: preserve security and storage invariants.
-- EI-PM-004: prepare EINV Network Recorder as the first ecosystem integration.
+- EI-PM-004: prepare Network Recorder as the first ecosystem integration.
 
 ## Resume point
 
-Integrate the validated release engine into the GUI, then create/onboard EINV Network Recorder as the first signed-release producer.
+Integrate the validated release engine into the GUI, then create/onboard Network Recorder as the first signed-release producer.
