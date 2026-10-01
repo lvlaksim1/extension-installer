@@ -91,8 +91,11 @@ function Get-InstallSnapshot {
     $browserInstallations = @(Get-ReleaseYandexProfileInstallations $extensionId)
     $externalUninstallProfiles = @(Get-ReleaseYandexExternalUninstallProfiles $extensionId)
 
-    $browserInstalled = ($browserInstallations.Count -gt 0)
-    $removedByUser = (-not $browserInstalled -and $externalUninstallProfiles.Count -gt 0)
+    # Chromium/Yandex may leave extension files on disk after the user removes an externally
+    # registered extension. The external_uninstalls marker is the browser's authoritative
+    # signal that the extension is no longer active and blocks automatic re-installation.
+    $removedByUser = ($externalUninstallProfiles.Count -gt 0)
+    $browserInstalled = ($browserInstallations.Count -gt 0 -and -not $removedByUser)
     $legacy = ($null -ne $yandex -and (Test-ReleaseLegacyYandexRegistration $yandex $extensionId))
     $foreign = $false
     $managed = $false
