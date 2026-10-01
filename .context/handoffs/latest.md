@@ -65,3 +65,15 @@ The first extension is named `Network Recorder`.
 - Silent uninstall preserves data by default.
 - Verified preview: `3.0.2-preview.4`, release tag `installer-preview-4`.
 - SHA-256: `72b8938252d02520d3c35c3b1cd397d9d04f9a7346ef03cc03f96c5aa4144b9c`.
+
+
+## Network Recorder repository
+
+- repository: `lvlaksim1/network-recorder`
+- visibility: public
+- created via: `lvlaksim1/repo-factory` Issue #82
+- factory profile: `infrastructure` (agentless)
+- Context Capsule / Project Manager: not installed by owner decision
+- standard Telegram secrets: not installed
+- current governance: coordinated by `extension-installer-project-manager`
+- next onboarding step: import the retained stable v1.6.0 source, then configure GitHub-side signing without changing the existing Extension ID.
