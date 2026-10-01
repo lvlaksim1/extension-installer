@@ -1,6 +1,6 @@
 # Latest handoff
 
-Updated: 2026-10-02 02:07 MSK
+Updated: 2026-10-02 02:09 MSK
 
 ## Manager
 
@@ -38,12 +38,12 @@ Root cause and correction:
 
 ## Current installer preview
 
-- version: `4.0.0-preview.14`
-- tag: `installer-preview-14`
-- asset: `ExtensionInstaller_Setup_v4.0.0-preview.14.exe`
-- SHA-256: `898bef8f3f0ca6cf6c3fe26841ac5e529b663b434f5460aec454f9ccb5498ad0`
-- validation run: `36938821186` — success
-- build run: `36938882816` — success
+- version: `4.0.0-preview.16`
+- tag: `installer-preview-16`
+- asset: `ExtensionInstaller_Setup_v4.0.0-preview.16.exe`
+- SHA-256: `d45731e08cd543b131ea19940bfa8110698ddefdd0cc3ee222597edd359f7fed`
+- validation run: `36938925514` — success
+- build run: `36938989331` — success
 - retained Actions artifacts: none
 
 ## Network Recorder
@@ -59,6 +59,6 @@ Root cause and correction:
 
 ## Resume point
 
-Owner installs ExtensionInstaller `4.0.0-preview.14`, fully closes Yandex Browser, rechecks Network Recorder and exercises the corrected explicit reinstall/migration path. Then verify the extension really appears and runs in Yandex Browser.
+Owner installs ExtensionInstaller `4.0.0-preview.16`, fully closes Yandex Browser, rechecks Network Recorder and exercises the corrected explicit reinstall/migration path. Then verify the extension really appears and runs in Yandex Browser.
 
 Stable publication remains gated on real install/update verification and explicit owner approval.
