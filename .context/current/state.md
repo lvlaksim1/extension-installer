@@ -35,3 +35,7 @@
 - Silent uninstall preserves working data by default; CI has an explicit cleanup switch only for exercising the full-delete path.
 - Preview `3.0.2-preview.4` passed Windows smoke tests for both uninstall branches and is published as prerelease `installer-preview-4`.
 - Preview 3.0.2-preview.4 SHA-256: `72b8938252d02520d3c35c3b1cd397d9d04f9a7346ef03cc03f96c5aa4144b9c`.
+
+- Public extension repository `lvlaksim1/network-recorder` was created through `lvlaksim1/repo-factory` using the agentless `infrastructure` profile.
+- Network Recorder currently has no Project Manager / Context Capsule. Ecosystem coordination remains with `extension-installer-project-manager`.
+- The Network Recorder repository has repository-level signing/release policy documented and a `.gitignore` that excludes RSA/private-key material and CRX/ZIP build outputs.
