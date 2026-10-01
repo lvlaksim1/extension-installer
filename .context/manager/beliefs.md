@@ -95,3 +95,11 @@ Interactive uninstall now asks whether the owner wants to remove ExtensionInstal
 
 - source: owner directive + verified repository + successful Windows CI
 - authority: owner-directive + verified-repository + verified-ci
+
+
+## B14 — Network Recorder repository governance
+
+`lvlaksim1/network-recorder` is a public, agentless extension repository created through repo-factory. The owner explicitly chose not to install a separate Project Manager there for now. Ecosystem coordination and onboarding responsibility remain with `extension-installer-project-manager`.
+
+- source: owner directive + verified repository
+- authority: owner-directive + verified-repository
