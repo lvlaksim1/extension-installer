@@ -19,3 +19,14 @@
 - The legacy GUI in `src/ExtensionInstaller.cmd` still uses the local ZIP/RSA path. It has not yet been switched to the release-driven engine, so the migration is intentionally incomplete.
 - Repository hygiene excludes RSA/key material, ZIP/CRX outputs, logs and local settings.
 - Active manager commitments: EI-PM-002, EI-PM-003, EI-PM-004.
+
+
+- Installable Windows packaging is implemented with Inno Setup.
+- Fixed installer AppId: `79735245-B74E-5117-B1EF-A58BDC270FC7`; repeated/newer installers use the same installed application identity and path.
+- Default install scope is per-user, no admin rights required, under `%LOCALAPPDATA%\Programs\ExtensionInstaller`.
+- The installed launcher runs the existing CMD UI without a visible console window.
+- Preview `3.0.2-preview.3` was built and published as GitHub prerelease `installer-preview-3`.
+- Windows CI smoke test passed: silent install, second install over the existing fixed-AppId installation, payload verification, and silent uninstall.
+- Setup SHA-256: `e69d4db6dc0ac55124e46dbd301d13ffb0504d8bb1b14d3955586c56073e37bd`.
+- No GitHub Actions artifact is retained; the setup EXE is published directly as a Release asset.
+- Canonical extension name for the first ecosystem integration is `Network Recorder`.
