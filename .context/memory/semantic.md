@@ -34,7 +34,7 @@ Network Recorder v1.6.0 uses Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`. Gi
 
 ## SM-005 — current product/release gate
 
-Preview.11 exposed a real-browser migration/state-detection defect after the owner removed the legacy-installed Network Recorder through Yandex Browser. Preview `4.0.0-preview.14` supersedes it as the current test candidate and passed Windows validation/build runs `36938821186` and `36938882816`.
+Preview.11 exposed a real-browser migration/state-detection defect after the owner removed the legacy-installed Network Recorder through Yandex Browser. Preview `4.0.0-preview.16` supersedes it as the current test candidate and passed Windows validation/build runs `36938925514` and `36938989331`. Preview.16 also gives `extensions.external_uninstalls` precedence over stale extension directories when determining actual browser installation state.
 
 The remaining gate is owner-side verification of the corrected reinstall/migration path, followed by a real later-version extension update.
 
