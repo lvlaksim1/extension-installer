@@ -73,16 +73,30 @@ jobs:
           # This verifies the update-in-place path does not create a separate copy.
           Invoke-Setup $setup
 
+          $dataDir = Join-Path $env:LOCALAPPDATA 'ExtensionInstaller'
+          New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
+          Set-Content -LiteralPath (Join-Path $dataDir 'smoke-preserve.txt') -Value 'preserve'
+
           $uninstaller = Join-Path $installDir 'unins000.exe'
           if (-not (Test-Path -LiteralPath $uninstaller -PathType Leaf)) { throw "Uninstaller missing: $uninstaller" }
           $u = Start-Process -FilePath $uninstaller -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART') -Wait -PassThru
           if ($u.ExitCode -ne 0) { throw "Uninstaller failed with exit code $($u.ExitCode)." }
+          if (-not (Test-Path -LiteralPath $dataDir -PathType Container)) { throw 'Silent uninstall unexpectedly removed user data.' }
 
           foreach ($name in @('ExtensionInstaller.cmd','ExtensionInstaller.vbs','ReleaseInstaller.ps1')) {
             if (Test-Path -LiteralPath (Join-Path $installDir $name) -PathType Leaf) { throw "Installed file remained after uninstall: $name" }
           }
 
-          Write-Host 'INSTALL_REINSTALL_UNINSTALL_SMOKE_VALID'
+          # Reinstall once more and explicitly exercise the full-cleanup path.
+          Invoke-Setup $setup
+          New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
+          Set-Content -LiteralPath (Join-Path $dataDir 'smoke-delete.txt') -Value 'delete'
+          $uninstaller = Join-Path $installDir 'unins000.exe'
+          $u = Start-Process -FilePath $uninstaller -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/REMOVEUSERDATA=1') -Wait -PassThru
+          if ($u.ExitCode -ne 0) { throw "Cleanup uninstall failed with exit code $($u.ExitCode)." }
+          if (Test-Path -LiteralPath $dataDir) { throw 'Explicit cleanup uninstall did not remove user data.' }
+
+          Write-Host 'INSTALL_REINSTALL_UNINSTALL_DATA_POLICY_SMOKE_VALID'
 
       - name: Publish prerelease directly
         id: release
