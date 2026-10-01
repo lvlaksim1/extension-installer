@@ -49,3 +49,50 @@ Name: "desktopicon"; Description: "Создать ярлык на рабочем
 
 [Run]
 Filename: "{sys}\wscript.exe"; Parameters: """{app}\ExtensionInstaller.vbs"""; Description: "Запустить ExtensionInstaller"; Flags: nowait postinstall skipifsilent
+
+[Code]
+var
+  RemoveUserData: Boolean;
+
+function HasCommandLineSwitch(const Expected: String): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 1 to ParamCount do
+  begin
+    if CompareText(ParamStr(I), Expected) = 0 then
+    begin
+      Result := True;
+      Exit;
+    end;
+  end;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  DataDir: String;
+begin
+  if CurUninstallStep = usUninstall then
+  begin
+    if UninstallSilent then
+      RemoveUserData := HasCommandLineSwitch('/REMOVEUSERDATA=1')
+    else
+      RemoveUserData :=
+        MsgBox('Удалить также настройки и рабочие данные ExtensionInstaller?' + #13#10 + #13#10 +
+          'Будет удалена папка:' + #13#10 +
+          ExpandConstant('{localappdata}\ExtensionInstaller'),
+          mbConfirmation, MB_YESNO) = IDYES;
+  end;
+
+  if (CurUninstallStep = usPostUninstall) and RemoveUserData then
+  begin
+    DataDir := ExpandConstant('{localappdata}\ExtensionInstaller');
+    if DirExists(DataDir) then
+    begin
+      if not DelTree(DataDir, True, True, True) then
+        MsgBox('Не удалось полностью удалить рабочие данные:' + #13#10 + DataDir,
+          mbError, MB_OK);
+    end;
+  end;
+end;
