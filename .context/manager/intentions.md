@@ -9,12 +9,12 @@
 - status: completed
 - source: owner directive
 - result: clean PowerShell GUI + release engine + catalog; local source-folder/ZIP/RSA product path removed from the current tree.
-- verification: Windows CI run 36934806674.
+- verification: Windows CI run `36935180820`.
 
 ## EI-PM-003 — preserve security and storage invariants
 - status: active
 - source: owner directive
-- commitment: keep private signing material out of Git/local installer, preserve Extension IDs, verify signed releases, and avoid retained build artifacts.
+- commitment: keep private signing material out of Git/local installer, preserve Extension IDs, verify signed releases, prevent foreign-registration takeover and avoid retained build artifacts.
 
 ## EI-PM-004 — integrate Network Recorder
 - status: active; repository/signing/software integration complete, real-browser gate pending
@@ -26,7 +26,7 @@
 - status: completed
 - source: owner directive
 - result: single Inno Setup EXE, fixed AppId, per-user installation, in-place update, obsolete installed CMD cleanup, optional removal of application data on uninstall.
-- verification: Windows CI run 36934806674.
+- verification: Windows CI run `36935180820`.
 
 ## EI-PM-006 — coordinate extension ecosystem
 - status: active
@@ -36,4 +36,4 @@
 ## EI-PM-007 — stable publication gate
 - status: pending
 - source: owner constraints
-- commitment: do not designate a stable ExtensionInstaller release until real Yandex Browser installation and update behavior have been verified and owner approval is obtained.
+- commitment: do not designate a stable ExtensionInstaller release until real Yandex Browser installation and extension-update behavior have been verified and owner approval is obtained.
