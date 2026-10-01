@@ -1,41 +1,39 @@
 # Manager intentions and commitments
 
-## EI-PM-001 — establish ExtensionInstaller repository baseline
+## EI-PM-001 — establish ExtensionInstaller repository
 - status: completed
 - source: owner directive
-- result: public repository created through repo-factory, Project Manager v2 installed, v3.0.2 imported, repository hygiene added.
-- verification: repository state on `main`.
+- result: public repository created through repo-factory with Project Manager v2.
 
-## EI-PM-002 — migrate installer architecture to signed-release consumption
-- status: accepted/active
-- source: owner directive and approved architecture
-- commitment: document the existing v3.0.2 responsibilities, define the release contract, then modify the installer so normal installation/update does not require local RSA private keys.
+## EI-PM-002 — implement clean signed-release architecture
+- status: completed
+- source: owner directive
+- result: clean PowerShell GUI + release engine + catalog; local source-folder/ZIP/RSA product path removed from the current tree.
+- verification: Windows CI run 36934806674.
 
 ## EI-PM-003 — preserve security and storage invariants
-- status: accepted/active
+- status: active
 - source: owner directive
-- commitment: prevent private signing material from entering Git/durable context, preserve stable extension IDs, and avoid unnecessary build artifacts.
+- commitment: keep private signing material out of Git/local installer, preserve Extension IDs, verify signed releases, and avoid retained build artifacts.
 
-## EI-PM-004 — prepare first real ecosystem integration
-- status: accepted/active
+## EI-PM-004 — integrate Network Recorder
+- status: active; repository/signing/software integration complete, real-browser gate pending
 - source: owner directive
-- commitment: after the installer contract is defined, integrate Network Recorder as the first separately managed extension without silently changing its stable identity or chosen stable code baseline.
+- result so far: Network Recorder v1.6.0 source is in its own public repository, signing secret is GitHub-hosted, signed prerelease preserves the original Extension ID, catalog entry is active, and ExtensionInstaller resolves/verifies it successfully.
+- remaining: owner-side Yandex Browser installation/function verification, then a real later-version update test.
 
-
-## EI-PM-005 — make ExtensionInstaller installable on Windows
+## EI-PM-005 — make ExtensionInstaller installable/updatable
 - status: completed
 - source: owner directive
-- result: per-user Inno Setup package with fixed AppId, Start Menu launcher, optional desktop shortcut, direct GitHub prerelease publication, and no Actions artifact retention.
-- verification: Windows run 36897779451 successfully completed build, install, in-place reinstall, payload verification, uninstall, and prerelease publication.
+- result: single Inno Setup EXE, fixed AppId, per-user installation, in-place update, obsolete installed CMD cleanup, optional removal of application data on uninstall.
+- verification: Windows CI run 36934806674.
 
-
-## EI-PM-006 — coordinate the extension ecosystem
-- status: accepted/active
+## EI-PM-006 — coordinate extension ecosystem
+- status: active
 - source: owner directive
-- commitment: manage the shared ExtensionInstaller + extension-repository integration from `extension-installer-project-manager` while extension repositories remain agentless unless the owner later assigns them their own manager.
+- commitment: coordinate ExtensionInstaller plus agentless extension repositories from `extension-installer-project-manager` until the owner assigns separate managers.
 
-
-### EI-PM-004 progress
-- Network Recorder repository created agentless by owner decision.
-- Network Recorder v1.6.0 baseline import completed byte-for-byte through repo-factory.
-- Next dependency: move the existing signing key into GitHub secret scope and produce a verified signed v1.6.0 release.
+## EI-PM-007 — stable publication gate
+- status: pending
+- source: owner constraints
+- commitment: do not designate a stable ExtensionInstaller release until real Yandex Browser installation and update behavior have been verified and owner approval is obtained.
