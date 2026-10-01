@@ -350,7 +350,7 @@ function Get-ReleaseYandexBrowserExecutablePath {
     $candidates = @(
         (Join-Path $env:LOCALAPPDATA "Yandex\YandexBrowser\Application\browser.exe"),
         $(if (-not [string]::IsNullOrWhiteSpace($env:ProgramFiles)) { Join-Path $env:ProgramFiles "Yandex\YandexBrowser\Application\browser.exe" } else { "" }),
-        $(if (-not [string]::IsNullOrWhiteSpace(\${env:ProgramFiles(x86)})) { Join-Path \${env:ProgramFiles(x86)} "Yandex\YandexBrowser\Application\browser.exe" } else { "" })
+        $(if (-not [string]::IsNullOrWhiteSpace(${env:ProgramFiles(x86)})) { Join-Path ${env:ProgramFiles(x86)} "Yandex\YandexBrowser\Application\browser.exe" } else { "" })
     )
 
     foreach ($candidate in $candidates) {
