@@ -580,6 +580,50 @@ function Write-ReleaseInstallState([string]$StatePath, $StateObject) {
     }
 }
 
+
+function Read-ReleaseOwnershipMarker([string]$OwnershipPath) {
+    if (-not (Test-Path -LiteralPath $OwnershipPath -PathType Leaf)) { return $null }
+    try {
+        $marker = [System.IO.File]::ReadAllText($OwnershipPath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json -ErrorAction Stop
+        if ([string](Get-ReleaseProperty $marker "Schema" "") -cne "extension-installer-ownership") { return $null }
+        if ([int](Get-ReleaseProperty $marker "SchemaVersion" 0) -ne 1) { return $null }
+        $id = [string](Get-ReleaseProperty $marker "ExtensionId" "")
+        if (-not (Test-ReleaseExtensionId $id)) { return $null }
+        return $marker
+    }
+    catch { return $null }
+}
+
+function Write-ReleaseOwnershipMarker([string]$OwnershipPath, [string]$ExtensionId, $State, $YandexValues) {
+    if (-not (Test-ReleaseExtensionId $ExtensionId)) { throw "Некорректный Extension ID для ownership marker." }
+
+    $lastVersion = ""
+    $lastCrxPath = ""
+    $sourceRepository = ""
+
+    if ($null -ne $State) {
+        $lastVersion = [string](Get-ReleaseProperty $State "Version" "")
+        $lastCrxPath = [string](Get-ReleaseProperty $State "CrxPath" "")
+        $sourceRepository = [string](Get-ReleaseProperty $State "SourceRepository" "")
+    }
+    elseif ($null -ne $YandexValues) {
+        $lastVersion = [string](Get-ReleaseProperty $YandexValues "Version" "")
+        $lastCrxPath = [string](Get-ReleaseProperty $YandexValues "Path" "")
+    }
+
+    $marker = [pscustomobject]@{
+        Schema = "extension-installer-ownership"
+        SchemaVersion = 1
+        ExtensionId = $ExtensionId
+        LastVersion = $lastVersion
+        LastCrxPath = $lastCrxPath
+        SourceRepository = $sourceRepository
+        RemovedUtc = [DateTime]::UtcNow.ToString("o")
+    }
+    Write-ReleaseInstallState $OwnershipPath $marker
+    return $marker
+}
+
 function Test-PathUnderRoot([string]$PathValue, [string]$RootValue) {
     if ([string]::IsNullOrWhiteSpace($PathValue) -or [string]::IsNullOrWhiteSpace($RootValue)) { return $false }
     try {
@@ -619,6 +663,7 @@ function Install-ValidatedSignedRelease($ResolvedRelease, [string]$InstallRoot) 
     $extensionRoot = Join-Path $InstallRoot $extensionId
     $crxRoot = Join-Path $extensionRoot "crx"
     $statePath = Join-Path $extensionRoot "state.json"
+    $ownershipPath = Join-Path $extensionRoot "ownership.json"
     if (-not (Test-Path -LiteralPath $crxRoot -PathType Container)) {
         New-Item -ItemType Directory -Path $crxRoot -Force | Out-Null
     }
@@ -677,6 +722,9 @@ function Install-ValidatedSignedRelease($ResolvedRelease, [string]$InstallRoot) 
             InstalledUtc = [DateTime]::UtcNow.ToString("o")
         }
         Write-ReleaseInstallState $statePath $newState
+        if (Test-Path -LiteralPath $ownershipPath -PathType Leaf) {
+            Remove-Item -LiteralPath $ownershipPath -Force -ErrorAction SilentlyContinue
+        }
 
         if ($null -ne $oldState) {
             $previous = [string]$oldState.CrxPath
@@ -728,6 +776,7 @@ function Uninstall-ReleaseExtension([string]$ExtensionId, [string]$InstallRoot) 
     $extensionRoot = Join-Path $InstallRoot $ExtensionId
     $crxRoot = Join-Path $extensionRoot "crx"
     $statePath = Join-Path $extensionRoot "state.json"
+    $ownershipPath = Join-Path $extensionRoot "ownership.json"
     $state = Read-ReleaseInstallState $statePath
     $y = Get-ReleaseYandexValues $ExtensionId
     $legacyRegistration = ($null -ne $y -and (Test-ReleaseLegacyYandexRegistration $y $ExtensionId))
@@ -741,13 +790,35 @@ function Uninstall-ReleaseExtension([string]$ExtensionId, [string]$InstallRoot) 
         elseif (-not (Test-PathUnderRoot $y.Path $crxRoot) -and -not $legacyRegistration) {
             throw "Запись Яндекс.Браузера не принадлежит ExtensionInstaller; удаление остановлено."
         }
+    }
+
+    # Persist durable ownership evidence before deleting the active registration/state.
+    # A running Chromium/Yandex process can retain its profile entry for a while after
+    # the external registry key disappears. Without this marker the next refresh could
+    # misclassify our own just-removed extension as foreign.
+    if ($null -ne $state -or $null -ne $y) {
+        if (-not (Test-Path -LiteralPath $extensionRoot -PathType Container)) {
+            New-Item -ItemType Directory -Path $extensionRoot -Force | Out-Null
+        }
+        Write-ReleaseOwnershipMarker $ownershipPath $ExtensionId $state $y | Out-Null
+    }
+
+    if ($null -ne $y) {
         Remove-Item -LiteralPath $y.Key -Recurse -Force
     }
 
-    if (Test-Path -LiteralPath $extensionRoot -PathType Container) {
-        Remove-Item -LiteralPath $extensionRoot -Recurse -Force
+    if (Test-Path -LiteralPath $crxRoot -PathType Container) {
+        Remove-Item -LiteralPath $crxRoot -Recurse -Force
     }
-    return $ExtensionId
+    if (Test-Path -LiteralPath $statePath -PathType Leaf) {
+        Remove-Item -LiteralPath $statePath -Force
+    }
+
+    return [pscustomobject]@{
+        ExtensionId = $ExtensionId
+        OwnershipPath = $ownershipPath
+        BrowserWasRunning = [bool](Test-ReleaseYandexBrowserRunning)
+    }
 }
 
 function Initialize-Crx3PackageInspector {
