@@ -103,3 +103,11 @@ Interactive uninstall now asks whether the owner wants to remove ExtensionInstal
 
 - source: owner directive + verified repository
 - authority: owner-directive + verified-repository
+
+
+## B15 — Network Recorder baseline imported
+
+The retained stable Network Recorder v1.6.0 archive with SHA-256 `eeb0cdfdf6323c96c6aea777ad9aed889522dc9de13e467b8f447723612e1db3` has been imported byte-for-byte into `lvlaksim1/network-recorder/src` through repo-factory. All five Git blob hashes match the retained archive. The manifest name is `Network Recorder`, version is `1.6.0`, and its public key derives Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`.
+
+- source: verified owner-retained archive + verified factory import
+- authority: owner-directive + verified-repository
