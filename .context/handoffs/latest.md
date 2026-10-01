@@ -1,6 +1,6 @@
 # Latest handoff
 
-Updated: 2026-10-02 01:28 MSK
+Updated: 2026-10-02 01:40 MSK
 
 ## Manager
 
@@ -8,6 +8,15 @@ Updated: 2026-10-02 01:28 MSK
 - repository: `lvlaksim1/extension-installer`
 - manager-state branch: `main`
 - product branch: `main`
+
+## Owner decisions now canonical
+
+- Remove legacy ExtensionInstaller functionality completely; do not preserve a compatibility UI/path.
+- Extension repositories remain separate from ExtensionInstaller.
+- Network Recorder currently has no separate manager; `extension-installer-project-manager` coordinates the extension ecosystem.
+- Private extension signing keys live only in GitHub secret scope.
+- Release CRX + `extension-release.json` live in the extension's GitHub Release; the user does not place them manually.
+- Stable release publication remains owner-controlled.
 
 ## Canonical ExtensionInstaller state
 
@@ -18,8 +27,9 @@ The current product is clean release-driven only.
 - catalog: `catalog/extensions.json`
 - release contract: `docs/EXTENSION_RELEASE_CONTRACT.md`
 - no local extension-folder selector
-- no local ZIP build/signing path
+- no local ZIP discovery/build/signing path
 - no private RSA key handling
+- no `src/ExtensionInstaller.cmd` in the current product tree
 - old installed `ExtensionInstaller.cmd` is explicitly deleted during upgrade
 
 Canonical flow:
@@ -40,7 +50,7 @@ Canonical flow:
 
 - repository: `lvlaksim1/network-recorder`
 - manager: none; ecosystem coordination remains here
-- version under test: `1.6.0`
+- source baseline: `1.6.0`
 - Extension ID: `paolfcaakecapidipfcfbbhgkpcmgcip`
 - signing secret name: `RSA_PRIVATE_KEY_BASE64` (value never persisted here)
 - verified prerelease: `network-recorder-v1.6.0-preview-1`
@@ -52,4 +62,6 @@ Canonical flow:
 
 ## Resume point
 
-Owner installs ExtensionInstaller `4.0.0-preview.11` over the current installation, then performs the first real Network Recorder install through the new GUI on Yandex Browser. Stable publication remains gated on real install/update verification.
+Owner installs ExtensionInstaller `4.0.0-preview.11` over the current installation, confirms legacy UI/files are gone, then performs the first real Network Recorder install through the new GUI on Yandex Browser.
+
+Stable publication remains gated on real install/update verification and explicit owner approval.
