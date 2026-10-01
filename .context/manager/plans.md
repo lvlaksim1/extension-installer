@@ -2,17 +2,10 @@
 
 Current plan for active intentions EI-PM-002…004:
 
-1. Audit `src/ExtensionInstaller.cmd` and separate its responsibilities into discovery, validation, signing/building, browser registration, diagnostics and local state.
-2. Define the extension release contract consumed by ExtensionInstaller:
-   - repository identity;
-   - extension ID;
-   - version;
-   - signed CRX asset;
-   - optional source ZIP asset;
-   - SHA-256/integrity metadata;
-   - release channel and compatibility metadata.
-3. Design the migration from local signing to GitHub-side signing so an existing RSA key continues to produce the same extension ID.
-4. Refactor the installer so signed-CRX installation/update is the primary path and local private-key signing is not required for normal operation.
-5. Add validation and diagnostics before removing/deprecating legacy code paths.
-6. Use EINV Network Recorder as the first end-to-end integration after its own repository is created and signing secret is configured.
-7. Verify installation/update against Yandex Browser before any stable installer release is designated.
+1. **Completed for this stage:** audit `src/ExtensionInstaller.cmd` and separate responsibilities into bootstrap, local discovery, manifest/package preparation, signing, browser registration, rollback/uninstall, browser assistance and GUI.
+2. **Completed for this stage:** define release contract v1 with pinned catalog identity, `extension-release.json`, signed CRX asset and SHA-256.
+3. **Completed for this stage:** implement and Windows-validate a release acquisition/verification engine that requires no private RSA key.
+4. **Completed for this stage:** implement the new signed-CRX registration/update/rollback/uninstall primitives.
+5. **Next:** integrate the validated engine into the user-facing installer GUI and replace local folder/ZIP selection as the primary path.
+6. **Next:** create the EINV Network Recorder repository, move its retained RSA key into GitHub secret scope, publish the selected stable 1.6.0 as a signed release, and pin its existing Extension ID in the installer catalog.
+7. **Gate:** verify real Yandex Browser installation/update before deleting legacy signing functions or publishing a stable installer release.
