@@ -145,7 +145,7 @@ function Resolve-LatestSignedExtensionRelease($CatalogEntry, [string]$WorkingRoo
     elseif ($channel -ceq "prerelease") {
         $releases = @(Invoke-GitHubReleaseJson ("https://api.github.com/repos/" + $repo + "/releases?per_page=20"))
         $release = @($releases | Where-Object {
-            -not [bool](Get-ReleaseProperty $_ "draft" $true) -and [bool](Get-ReleaseProperty $_ "prerelease" $false)
+            $_.draft -eq $false -and $_.prerelease -eq $true
         } | Select-Object -First 1)
         if ($release.Count -ne 1) { throw "Для prerelease channel не найден опубликованный prerelease." }
         $release = $release[0]
