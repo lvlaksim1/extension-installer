@@ -33,7 +33,9 @@ if ($LASTEXITCODE -ne 0) {
     throw "Inno Setup завершился с кодом $LASTEXITCODE."
 }
 
-$setup = Get-ChildItem -LiteralPath $dist -Filter "ExtensionInstaller_Setup_*.exe" -File | Select-Object -Single
+$setups = @(Get-ChildItem -LiteralPath $dist -Filter "ExtensionInstaller_Setup_*.exe" -File)
+if ($setups.Count -ne 1) { throw "Ожидался ровно один setup EXE, найдено: $($setups.Count)." }
+$setup = $setups[0]
 $sha = (Get-FileHash -LiteralPath $setup.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
 
 [pscustomobject]@{
