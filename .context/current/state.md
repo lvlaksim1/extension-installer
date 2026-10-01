@@ -1,6 +1,6 @@
 # Current state
 
-Updated: 2026-10-02 02:32 MSK
+Updated: 2026-10-02 02:50 MSK
 
 - Repository: `lvlaksim1/extension-installer`.
 - Visibility: public.
@@ -32,15 +32,15 @@ Updated: 2026-10-02 02:32 MSK
 - The old v3.x installer registered CRX files from `%LOCALAPPDATA%\UniversalExtensionBuilder\projects\<extension-id>\crx`; preview.11 treated that exact old ExtensionInstaller-owned path as foreign.
 - Browser-UI removal can leave the external registry registration and record the Extension ID in the Chromium/Yandex `extensions.external_uninstalls` preference, so registry presence alone is not proof that the extension remains installed.
 - Current `main` fixes this by distinguishing actual browser-profile extension files, explicit user-uninstall markers, current managed registration/state, exact v3 legacy-owned registration, and truly foreign registrations.
-- Preview.22 no longer requires Yandex Browser to be closed for install/reinstall. If the browser is running, ExtensionInstaller does not edit its Preferences file; instead it performs a two-phase remove/recreate of the owned registry registration so Chromium/Yandex's live registry watcher observes a fresh external installation. If the browser is closed, a persisted target `external_uninstalls` marker may still be cleared safely with rollback.
+- Preview.22 introduced no-restart live registry re-registration, but a user-removed external extension may still be rejected by the running browser because the browser owns a persisted user-removal decision. Preview.24 therefore keeps the hot registry path first, then falls back to a browser-owned no-restart activation path: it opens `browser://tune` in the already-running Yandex Browser and selects the exact verified managed CRX in Explorer for normal user confirmation. It does not silently edit browser Preferences while Yandex is running.
 - True foreign registrations remain protected from takeover/removal.
-- Windows validation run `36941205548` passed browser-profile settings detection, stale-directory rejection, external-uninstall handling, live registry re-registration pulse, legacy-registration and published-release checks.
-- Current verified installer preview: `4.0.0-preview.22`.
-- Release tag: `installer-preview-22`.
-- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.22.exe`.
-- Setup SHA-256: `e401fc5ed03fbd5a6dead9beb243a8947f33466a6bdb7d03e8caf503d0b29dcf`.
-- Windows build run `36941269628` passed installer build, payload validation, install/reinstall/uninstall smoke tests and direct prerelease publication.
-- Retained GitHub Actions artifacts for run `36941269628`: none.
+- Windows validation run `36942756644` passed PowerShell 5.1 parsing, browser-state helpers, external-uninstall handling, live registry re-registration logic and published Network Recorder release verification.
+- Current verified installer preview: `4.0.0-preview.24`.
+- Release tag: `installer-preview-24`.
+- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.24.exe`.
+- Setup SHA-256: `36f28f2e2bb814b0c7cf77c45b73f0f74cb3dda105bb60a04fb0f2571652e140`.
+- Windows build run `36942832970` passed installer build, payload validation, install/reinstall/uninstall smoke tests and direct prerelease publication.
+- Retained GitHub Actions artifacts for run `36942832970`: none.
 - Stable ExtensionInstaller publication has not been designated.
-- Preview.22 supersedes preview.16 because it restores hot registration into an already-running Yandex Browser and determines installed state from browser profile `extensions.settings` rather than stale extension directories.
-- Next external gate: owner installs preview 4.0.0-preview.22 while keeping Yandex Browser open, reinstalls Network Recorder, and verifies that it appears in the browser without restart.
+- Preview.24 supersedes preview.22 because it preserves hot registration but adds a no-restart browser-owned activation fallback for the specific case where the extension was previously removed through Yandex Browser or the live registry event is not accepted.
+- Next external gate: owner installs preview 4.0.0-preview.24 while keeping Yandex Browser open, applies/reinstalls Network Recorder, and verifies either immediate hot load or the automatic `browser://tune` + selected-CRX fallback without restarting the browser.
