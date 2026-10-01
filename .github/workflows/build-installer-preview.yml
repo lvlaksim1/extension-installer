@@ -35,6 +35,8 @@ jobs:
 
       - name: Validate installer payload
         shell: powershell
+        env:
+          EXTENSION_INSTALLER_GITHUB_TOKEN: ${{ github.token }}
         run: |
           $ErrorActionPreference = 'Stop'
           $setup = '${{ steps.build.outputs.setup_path }}'
