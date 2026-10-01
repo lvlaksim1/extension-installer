@@ -87,3 +87,11 @@ ExtensionInstaller has a verified per-user Inno Setup packaging path with a fixe
 
 - source: verified repository + successful Windows GitHub Actions run 36897779451
 - authority: verified-repository + verified-ci
+
+
+## B13 — uninstall data policy
+
+Interactive uninstall now asks whether the owner wants to remove ExtensionInstaller working data. Program removal and user-data removal are separate decisions: declining preserves `%LOCALAPPDATA%\ExtensionInstaller`, confirming removes it. Windows CI verified both preservation and explicit-cleanup branches in preview `3.0.2-preview.4`.
+
+- source: owner directive + verified repository + successful Windows CI
+- authority: owner-directive + verified-repository + verified-ci
