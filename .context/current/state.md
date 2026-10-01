@@ -6,10 +6,16 @@
 - Durable manager identity: `extension-installer-project-manager`.
 - Manager-state authority: `main`; product authority: `main`.
 - Standard Telegram secrets: skipped.
-- The retained `ExtensionInstaller_v3.0.2.cmd` has been imported as `src/ExtensionInstaller.cmd`.
+- The retained `ExtensionInstaller_v3.0.2.cmd` remains preserved as `src/ExtensionInstaller.cmd`.
 - Original retained file SHA-256 before import: `100193a70aa77f0a06fb76d84a4deb28c6447ad930a6fb36e1a2159600a0375a`.
-- Pre-import scan found references to `RSA_PRIVATE_KEY.txt` as an external file, but no embedded RSA private key or obvious token/password material.
+- v3.0.2 functional audit is recorded in `docs/V3.0.2_FUNCTIONAL_AUDIT.md`.
+- Signed-extension release contract v1 is recorded in `docs/EXTENSION_RELEASE_CONTRACT.md`.
+- Catalog skeleton exists at `catalog/extensions.json`; it is intentionally empty until an extension repository is onboarded.
+- New release-driven engine exists at `src/ReleaseInstaller.ps1`.
+- The new engine contains no local private-key creation/import/signing path. It resolves a public GitHub latest Release, downloads `extension-release.json` and the signed CRX, verifies SHA-256, parses CRX3, derives Extension ID from the embedded public key, verifies the RSA/SHA-256 CRX3 proof, and rejects identity mismatch against the pinned catalog entry.
+- The new engine also implements installer-owned signed-CRX storage, Yandex Browser registry registration/update, rollback, state persistence and uninstall without any private key.
+- Windows PowerShell 5.1 validation passed on commit `691d71fb524e6d0acc7a7fe7c7b01a4d7b4c5aa4`; the validation compiles the CRX3 inspector and checks the release engine/catalog. No Actions artifacts are produced.
+- A WinPS 5.1 UTF-8/BOM incompatibility and one code-generation replacement bug were found during validation and fixed before this state was recorded.
+- The legacy GUI in `src/ExtensionInstaller.cmd` still uses the local ZIP/RSA path. It has not yet been switched to the release-driven engine, so the migration is intentionally incomplete.
 - Repository hygiene excludes RSA/key material, ZIP/CRX outputs, logs and local settings.
-- Target architecture: separate extension repositories, signing keys stored only as GitHub Actions secrets, signed CRX files published in Releases, installer consumes signed releases.
 - Active manager commitments: EI-PM-002, EI-PM-003, EI-PM-004.
-- Next substantial work begins with auditing v3.0.2 responsibilities and defining the signed extension release contract.
