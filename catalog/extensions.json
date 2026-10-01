@@ -1,5 +1,13 @@
 {
   "schema": "extension-installer-catalog",
   "schema_version": 1,
-  "extensions": []
+  "extensions": [
+    {
+      "slug": "network-recorder",
+      "name": "Network Recorder",
+      "repository": "lvlaksim1/network-recorder",
+      "extension_id": "paolfcaakecapidipfcfbbhgkpcmgcip",
+      "channel": "prerelease"
+    }
+  ]
 }
