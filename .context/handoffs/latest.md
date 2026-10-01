@@ -1,6 +1,6 @@
 # Latest handoff
 
-Updated: 2026-10-02 02:09 MSK
+Updated: 2026-10-02 02:32 MSK
 
 ## Manager
 
@@ -34,16 +34,16 @@ Root cause and correction:
 - registry presence is therefore not accepted as proof of actual installation;
 - v4 now detects actual profile extension files and the browser user-uninstall marker separately;
 - the exact v3-owned path is accepted as migratable ExtensionInstaller state, while unrelated registrations remain protected;
-- explicit reinstall clears only the target `external_uninstalls` ID while Yandex is closed, with rollback on failure.
+- preview.22 does not require a browser restart: while Yandex is running, ExtensionInstaller performs a two-phase remove/recreate of its owned registry subkey so the browser's live registry watcher sees a fresh external registration; Preferences are not edited behind a running browser.
 
 ## Current installer preview
 
-- version: `4.0.0-preview.16`
-- tag: `installer-preview-16`
-- asset: `ExtensionInstaller_Setup_v4.0.0-preview.16.exe`
-- SHA-256: `d45731e08cd543b131ea19940bfa8110698ddefdd0cc3ee222597edd359f7fed`
-- validation run: `36938925514` — success
-- build run: `36938989331` — success
+- version: `4.0.0-preview.22`
+- tag: `installer-preview-22`
+- asset: `ExtensionInstaller_Setup_v4.0.0-preview.22.exe`
+- SHA-256: `e401fc5ed03fbd5a6dead9beb243a8947f33466a6bdb7d03e8caf503d0b29dcf`
+- validation run: `36941205548` — success
+- build run: `36941269628` — success
 - retained Actions artifacts: none
 
 ## Network Recorder
@@ -59,6 +59,6 @@ Root cause and correction:
 
 ## Resume point
 
-Owner installs ExtensionInstaller `4.0.0-preview.16`, fully closes Yandex Browser, rechecks Network Recorder and exercises the corrected explicit reinstall/migration path. Then verify the extension really appears and runs in Yandex Browser.
+Owner installs ExtensionInstaller `4.0.0-preview.22` while keeping Yandex Browser open, runs install/reinstall for Network Recorder, and verifies that the extension appears in the already-running browser without restart.
 
 Stable publication remains gated on real install/update verification and explicit owner approval.
