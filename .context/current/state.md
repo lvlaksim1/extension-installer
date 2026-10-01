@@ -46,3 +46,11 @@
 - Git blob hashes for all five imported files were compared against the retained ZIP and matched byte-for-byte.
 - Imported manifest confirms canonical name `Network Recorder`, version `1.6.0`, and the existing public key derives Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`.
 - No private signing key is committed to `network-recorder`.
+
+- Network Recorder GitHub signing is operational using repository secret `RSA_PRIVATE_KEY_BASE64` (secret value is not stored in context).
+- Signed prerelease `network-recorder-v1.6.0-preview-1` was built on GitHub Actions from v1.6.0 source.
+- The signing key preserved Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`.
+- Published CRX SHA-256: `3516149ea638f6ff10626c1ae974c92627e220c1e86b5c5195abdea4700c26cf`.
+- Release assets: `Network_Recorder_v1.6.0.crx` and `extension-release.json`.
+- ExtensionInstaller independently validated the published prerelease: descriptor, SHA-256, CRX3 signature and embedded Extension ID all passed.
+- Neither signing nor validation workflow retained GitHub Actions artifacts.
