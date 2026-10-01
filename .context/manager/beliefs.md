@@ -111,3 +111,11 @@ The retained stable Network Recorder v1.6.0 archive with SHA-256 `eeb0cdfdf6323c
 
 - source: verified owner-retained archive + verified factory import
 - authority: owner-directive + verified-repository
+
+
+## B15 — Network Recorder GitHub signing verified
+
+Network Recorder v1.6.0 is now signed entirely in GitHub Actions using repository secret `RSA_PRIVATE_KEY_BASE64`. The resulting CRX preserves Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`. Prerelease `network-recorder-v1.6.0-preview-1` has CRX SHA-256 `3516149ea638f6ff10626c1ae974c92627e220c1e86b5c5195abdea4700c26cf` and passed independent ExtensionInstaller-side CRX3 signature/identity/descriptor validation.
+
+- source: verified network-recorder workflow + verified extension-installer cross-validation workflow
+- authority: verified-ci + verified-repository
