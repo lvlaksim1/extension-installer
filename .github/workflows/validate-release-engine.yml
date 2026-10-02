@@ -129,6 +129,16 @@ jobs:
             throw 'Closed browser incorrectly requested a live reset.'
           }
 
+          if (Test-ReleaseYandexPostRegistrationConfirmationRequired -BrowserRunning $true -LiveResetPerformed $false) {
+            throw 'Normal live install/update incorrectly requested profile confirmation.'
+          }
+          if (-not (Test-ReleaseYandexPostRegistrationConfirmationRequired -BrowserRunning $true -LiveResetPerformed $true)) {
+            throw 'Live-reset recovery did not request browser confirmation.'
+          }
+          if (Test-ReleaseYandexPostRegistrationConfirmationRequired -BrowserRunning $false -LiveResetPerformed $true) {
+            throw 'Closed browser incorrectly requested post-registration confirmation.'
+          }
+
 
           $ownershipRoot = Join-Path $env:RUNNER_TEMP ('ownership-' + [Guid]::NewGuid().ToString('N'))
           $ownershipPath = Join-Path $ownershipRoot 'ownership.json'
