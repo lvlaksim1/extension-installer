@@ -1,6 +1,6 @@
 # Current state
 
-Updated: 2026-10-02 03:22 MSK
+Updated: 2026-10-02 03:30 MSK
 
 - Repository: `lvlaksim1/extension-installer`.
 - Visibility: public.
@@ -40,14 +40,14 @@ Updated: 2026-10-02 03:22 MSK
 - Owner-side preview.26 test confirmed ExtensionInstaller can report the managed extension as installed while Network Recorder is still absent from the Yandex Browser extensions UI. This proved browser-profile residue is not reliable proof of live loading.
 - The canonical v3.0.2 source `ExtensionInstaller.cmd` was re-audited as the behavioral reference. Its working registration path never deletes/recreates the extension registry key: it uses `New-Item -Force` and overwrites only `path` and `version` in `HKCU:\Software\Yandex\YandexBrowser\Extensions\<id>`. Its CRX3 signing algorithm and manifest public-key identity match the current Network Recorder release pipeline. v3 also includes a `user32.dll` window-activation bridge and a `browser://tune/` confirmation panel.
 - The preview.22–26 remove/recreate registry pulse was therefore a regression from v3 semantics: deleting the key can be observed by Chromium/Yandex as external uninstall before recreation.
-- Current `main` now restores v3.0.2 in-place registration semantics exactly, retains preview.26 ownership recovery, ports the v3 Yandex foreground bridge, and forces the browser-owned `browser://tune` fallback for ambiguous recovery/same-value reinstall cases rather than trusting stale profile presence.
-- Current verified installer preview: `4.0.0-preview.31`.
-- Release tag: `installer-preview-31`.
-- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.31.exe`.
-- Setup SHA-256: `7a77f01e7c1484f9794737a67cf77d23f75f688f0dd831c8b408fb0d0e802c04`.
-- Windows validation run `36945415272` passed the rebuilt clean release engine, v3-style in-place registry update test, ownership recovery, window-bridge compilation and signed Network Recorder verification.
-- Windows build run `36945552459` passed installer build, updated v3-style registry smoke test, payload validation and direct prerelease publication.
-- Retained GitHub Actions artifacts for run `36945552459`: none.
+- Current `main` preserves v3.0.2 in-place registration for normal install/update, but adds a browser-owned recovery handshake for explicit uninstall/same-value reinstall: if Yandex still remembers the extension as externally uninstalled (including persisted state=2), ExtensionInstaller removes its registry key, waits up to 15 seconds for Yandex's live registry watcher to clear the old profile/killbit, and only then re-registers the exact verified CRX. It then waits up to 10 seconds for a non-uninstalled profile state before reporting live success.
+- Current verified installer preview: `4.0.0-preview.33`.
+- Release tag: `installer-preview-33`.
+- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.33.exe`.
+- Setup SHA-256: `f8d4275762e3ff264f5e20e39b34dc47f346de62581374a068ace7f2fa0d5a46`.
+- Windows validation run `36946218482` passed PowerShell 5.1 parsing, v3-style registration, ownership recovery, Chromium state=2 (`EXTERNAL_EXTENSION_UNINSTALLED`) detection, and published Network Recorder verification.
+- Windows build run `36946267122` passed installer build, payload validation, smoke tests and direct prerelease publication.
+- Retained GitHub Actions artifacts for run `36946267122`: none.
 - Stable ExtensionInstaller publication has not been designated.
-- Preview.31 supersedes preview.26 because it removes the incorrect registry pulse and restores the proven v3.0.2 in-place registration behavior while keeping the newer ownership/recovery safeguards.
-- Next external gate: owner installs preview 4.0.0-preview.31 over preview.26 with Yandex Browser left open, runs reinstall once, and verifies whether Network Recorder actually appears in the browser UI. If the registry values are unchanged or the prior state is ambiguous, preview.31 must surface the no-restart `browser://tune` fallback instead of claiming successful live load.
+- Preview.33 supersedes preview.31 because it keeps v3.0.2 in-place behavior for normal registration but adds an acknowledged live reset only when Yandex is blocking a reinstall or the same registration must be re-applied.
+- Next external gate: owner installs preview 4.0.0-preview.33 over the current preview with Yandex Browser left open and runs reinstall. Success means Network Recorder actually appears in the browser UI without restart; ExtensionInstaller must not claim success unless the browser-side non-uninstalled state is observed.
