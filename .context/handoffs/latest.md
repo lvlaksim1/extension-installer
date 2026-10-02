@@ -1,6 +1,6 @@
 # Latest handoff
 
-Updated: 2026-10-02 02:50 MSK
+Updated: 2026-10-02 03:01 MSK
 
 ## Manager
 
@@ -34,16 +34,17 @@ Root cause and correction:
 - registry presence is therefore not accepted as proof of actual installation;
 - v4 now detects actual profile extension files and the browser user-uninstall marker separately;
 - the exact v3-owned path is accepted as migratable ExtensionInstaller state, while unrelated registrations remain protected;
-- preview.24 does not require a browser restart: while Yandex is running, ExtensionInstaller first performs a two-phase remove/recreate of its owned registry subkey. If the extension was previously removed through the browser or is still not present in browser profile state after the hot attempt, ExtensionInstaller opens `browser://tune` and selects the verified managed CRX in Explorer for normal user-confirmed installation. Preferences are not edited behind a running browser.
+- preview.24 added no-restart install fallback, but owner testing found that ExtensionInstaller-driven uninstall could erase its own active state before Yandex removed the profile entry, causing a false foreign classification.
+- preview.26 adds durable `ownership.json` on uninstall and models profile-only presence of the trusted catalog Extension ID separately from foreign external registration. This makes the already-existing preview.24 broken state recoverable and keeps future uninstall -> reinstall cycles available without browser restart.
 
 ## Current installer preview
 
-- version: `4.0.0-preview.24`
-- tag: `installer-preview-24`
-- asset: `ExtensionInstaller_Setup_v4.0.0-preview.24.exe`
-- SHA-256: `36f28f2e2bb814b0c7cf77c45b73f0f74cb3dda105bb60a04fb0f2571652e140`
-- validation run: `36942756644` — success
-- build run: `36942832970` — success
+- version: `4.0.0-preview.26`
+- tag: `installer-preview-26`
+- asset: `ExtensionInstaller_Setup_v4.0.0-preview.26.exe`
+- SHA-256: `5eaf625998a2640d18b0f108e51151f58c6c1d8a9846cbb58947716a8328cfdf`
+- validation run: `36943693207` — success
+- build run: `36943747512` — success
 - retained Actions artifacts: none
 
 ## Network Recorder
@@ -59,6 +60,6 @@ Root cause and correction:
 
 ## Resume point
 
-Owner installs ExtensionInstaller `4.0.0-preview.24` while keeping Yandex Browser open, runs install/reinstall/apply for Network Recorder, and verifies either immediate hot load or the automatic `browser://tune` + selected-CRX fallback, with no browser restart.
+Owner installs ExtensionInstaller `4.0.0-preview.26` over preview.24, verifies the existing false-foreign state becomes reinstallable, then exercises install -> uninstall -> check -> reinstall while keeping Yandex Browser open.
 
 Stable publication remains gated on real install/update verification and explicit owner approval.
