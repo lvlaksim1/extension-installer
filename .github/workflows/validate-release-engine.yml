@@ -84,11 +84,13 @@ jobs:
           New-ItemProperty -LiteralPath (Join-Path $registryTestRoot $testId) -Name 'path' -PropertyType String -Value 'C:\old\legacy.crx' -Force | Out-Null
           New-ItemProperty -LiteralPath (Join-Path $registryTestRoot $testId) -Name 'version' -PropertyType String -Value '1.5.0' -Force | Out-Null
 
-          $pulse = Set-ReleaseYandexRegistrationFresh -ExtensionId $testId -CrxPath $registryTestCrx -Version '1.6.0' -BaseKey $registryTestRoot -BrowserRunningOverride $true -PulseDelayMilliseconds 0
-          if (-not $pulse.HadRegistration -or -not $pulse.Pulsed) { throw 'Live registry re-registration pulse was not reported.' }
-          $pulseValues = Get-ItemProperty -LiteralPath (Join-Path $registryTestRoot $testId)
-          if ([string]$pulseValues.path -cne $registryTestCrx -or [string]$pulseValues.version -cne '1.6.0') {
-            throw 'Live registry re-registration pulse wrote incorrect values.'
+          $registration = Set-ReleaseYandexRegistration -ExtensionId $testId -CrxPath $registryTestCrx -Version '1.6.0' -BaseKey $registryTestRoot -BrowserRunningOverride $true
+          if (-not $registration.HadRegistration -or -not $registration.InPlace -or -not $registration.ValuesChanged) {
+            throw 'v3-style in-place registration was not reported correctly.'
+          }
+          $registrationValues = Get-ItemProperty -LiteralPath (Join-Path $registryTestRoot $testId)
+          if ([string]$registrationValues.path -cne $registryTestCrx -or [string]$registrationValues.version -cne '1.6.0') {
+            throw 'v3-style in-place registration wrote incorrect values.'
           }
           Remove-Item -LiteralPath $registryTestBase -Recurse -Force -ErrorAction SilentlyContinue
           Remove-Item -LiteralPath $registryTestCrx -Force -ErrorAction SilentlyContinue
