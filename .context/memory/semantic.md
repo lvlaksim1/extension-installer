@@ -26,7 +26,7 @@ Extension repositories may remain agentless. At present Network Recorder has no 
 
 ## SM-004 — Network Recorder identity
 
-Network Recorder v1.6.0 uses Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`. GitHub-side signing with `RSA_PRIVATE_KEY_BASE64` preserved that ID.
+Network Recorder uses Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`. GitHub-side signing with `RSA_PRIVATE_KEY_BASE64` preserved that ID through v1.7.0; current verified prerelease is `network-recorder-v1.7.0-preview-7`.
 
 - source: verified signing workflow + independent ExtensionInstaller validation
 - authority: verified-ci
@@ -116,4 +116,22 @@ If the installer temporarily interacts with or activates the browser, control mu
 
 - source: owner runtime observation + preview.35 implementation
 - authority: owner-runtime-evidence + verified-repository
+- status: active
+
+## SM-014 — Chromium Tracing is only one capture dimension
+
+Disabling Chromium Tracing does not imply a lightweight recording. Network response bodies, storage snapshots, MHTML/DOM snapshots, downloads/blobs and archive encoding are independent size drivers. Capture settings must expose those dimensions separately.
+
+Network Recorder v1.7.0 makes heavy dimensions opt-in while keeping full network metadata and API/text evidence on by default.
+
+- source: owner runtime observation + v1.6.0 source audit + v1.7.0 implementation
+- authority: owner-runtime-evidence + verified-repository
+- status: active
+
+## SM-015 — measure archive size by category
+
+When capture archives become unexpectedly large, do not infer the cause from one feature toggle. Export should report actual size contributions. Network Recorder v1.7.0 writes `archiveSizeBreakdown` into `session-manifest.json`, with per-category uncompressed/archive bytes and compression savings, so subsequent tuning is evidence-based.
+
+- source: v1.7.0 implementation + successful signed build
+- authority: verified-repository + verified-ci
 - status: active
