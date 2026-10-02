@@ -123,6 +123,9 @@ jobs:
           Remove-Item -LiteralPath $fakeUserData -Recurse -Force -ErrorAction SilentlyContinue
 
           Initialize-Crx3PackageInspector
+          Initialize-ReleaseYandexWindowBridge
+          if (-not ("ExtensionInstallerYandexWindowBridge" -as [type])) { throw 'Yandex window activation bridge did not compile.' }
+
           $catalog = Read-ExtensionCatalog '.\catalog\extensions.json'
           if ($catalog.schema_version -ne 1) { throw 'Unexpected catalog schema version.' }
 
