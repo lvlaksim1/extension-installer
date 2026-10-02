@@ -34,7 +34,7 @@ Network Recorder v1.6.0 uses Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`. Gi
 
 ## SM-005 — current product/release gate
 
-Preview.11 exposed a real-browser migration/state-detection defect after the owner removed the legacy-installed Network Recorder through Yandex Browser. Preview `4.0.0-preview.26` supersedes it as the current test candidate and passed Windows validation/build runs `36943693207` and `36943747512`. Preview.26 retains the no-restart install path and additionally preserves durable ownership across ExtensionInstaller-driven uninstall while treating profile-only presence of the trusted Extension ID as browser-only rather than foreign.
+Preview.11 exposed a real-browser migration/state-detection defect after the owner removed the legacy-installed Network Recorder through Yandex Browser. Preview `4.0.0-preview.31` supersedes it as the current test candidate and passed Windows validation/build runs `36945415272` and `36945552459`. Preview.31 keeps durable ownership/browser-only recovery but restores the old v3.0.2 non-destructive registry registration path: update only `path` and `version`, never delete/recreate the external-extension key during install/update.
 
 The remaining gate is owner-side verification of the corrected reinstall/migration path, followed by a real later-version extension update.
 
@@ -52,12 +52,14 @@ Status/migration logic must distinguish these states and must retain protection 
 - authority: owner-runtime-evidence + verified-repository + verified-ci
 - status: active
 
-## SM-007 — no-restart install uses browser-owned registry watching
+## SM-007 — canonical hot registration is non-destructive
 
-When Yandex Browser is already running, ExtensionInstaller must not modify profile Preferences behind the browser's back. For an owned existing external-registration key, remove the child key, allow the browser registry watcher to observe removal, then recreate the key with the validated CRX path/version. This preserves the browser as the authority for its in-memory extension/preferences state and restores hot installation behavior.
+The old ExtensionInstaller v3.0.2 working implementation is authoritative for Yandex registration behavior. During install/update it never deletes the extension's registry child key. It creates/opens the same key and overwrites only `path` and `version`.
 
-- source: owner directive + Chromium external registry loader + verified implementation/CI
-- authority: owner-directive + verified-repository + verified-ci
+The v4 preview.22–26 remove/recreate “pulse” was an invented regression, not legacy behavior. A temporary key deletion can be observed as external uninstall by a running Chromium/Yandex instance. Preview.31 removes that pulse and restores v3 semantics.
+
+- source: verified v3.0.2 source + owner runtime observation + preview.31 implementation/CI
+- authority: verified-repository + owner-runtime-evidence + verified-ci
 - status: active
 
 ## SM-008 — do not silently defeat browser user-removal state
@@ -78,4 +80,14 @@ Reusable rule: persist a small durable ownership tombstone before destructive un
 
 - source: owner runtime observation + preview.26 implementation/CI
 - authority: owner-runtime-evidence + verified-repository + verified-ci
+- status: active
+
+## SM-010 — real browser UI is the external acceptance criterion
+
+Installer-owned registry/state and browser preference residue are diagnostic inputs, not the final proof that an extension is live. Preview.26 demonstrated that ExtensionInstaller could display “Установлено” while the extension was absent from the actual Yandex extensions UI.
+
+For install/reinstall validation, the external acceptance criterion is actual browser presence and operation. Ambiguous recovery/same-value cases must use browser-owned confirmation (`browser://tune` with the verified CRX) instead of inferring success from stale profile records.
+
+- source: owner runtime observation + preview.31 design
+- authority: owner-runtime-evidence + verified-repository
 - status: active
