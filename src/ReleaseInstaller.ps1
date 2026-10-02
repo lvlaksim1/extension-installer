@@ -707,6 +707,15 @@ function Test-ReleaseYandexLiveResetRequired {
     return $false
 }
 
+function Test-ReleaseYandexPostRegistrationConfirmationRequired {
+    param(
+        [bool]$BrowserRunning,
+        [bool]$LiveResetPerformed
+    )
+
+    return ($BrowserRunning -and $LiveResetPerformed)
+}
+
 function Reset-ReleaseYandexExternalRegistrationLive {
     param(
         [Parameter(Mandatory = $true)]
@@ -1019,9 +1028,16 @@ function Install-ValidatedSignedRelease($ResolvedRelease, [string]$InstallRoot) 
         throw ("Установка release CRX не выполнена. Rollback завершён. Причина: " + $reason)
     }
 
+    # Normal install/update is complete once the owned CRX, state file and
+    # external-extension registry values are written and verified. Yandex profile
+    # metadata is asynchronous and may lag even while the live registry watcher is
+    # working, so polling it here made ordinary updates slow and produced false
+    # "not confirmed" UX. Only an explicit live-reset recovery requires a browser
+    # acknowledgement after re-registration.
     $browserObservedInstalled = $false
     $browserObserveElapsed = 0
-    if ($browserRunning) {
+    $browserConfirmationRequired = Test-ReleaseYandexPostRegistrationConfirmationRequired -BrowserRunning $browserRunning -LiveResetPerformed $liveResetPerformed
+    if ($browserConfirmationRequired) {
         $observe = Wait-ReleaseYandexProfileInstalled -ExtensionId $extensionId -Version $version -TimeoutMilliseconds 10000
         $browserObservedInstalled = [bool]$observe.Installed
         $browserObserveElapsed = [int]$observe.ElapsedMilliseconds
@@ -1039,6 +1055,7 @@ function Install-ValidatedSignedRelease($ResolvedRelease, [string]$InstallRoot) 
         LiveResetPerformed = [bool]$liveResetPerformed
         LiveResetCleared = [bool]$liveResetCleared
         LiveResetElapsedMilliseconds = [int]$liveResetElapsed
+        BrowserConfirmationRequired = [bool]$browserConfirmationRequired
         BrowserObservedInstalled = [bool]$browserObservedInstalled
         BrowserObserveElapsedMilliseconds = [int]$browserObserveElapsed
     }
