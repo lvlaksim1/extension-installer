@@ -34,7 +34,7 @@ Network Recorder v1.6.0 uses Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`. Gi
 
 ## SM-005 — current product/release gate
 
-Preview.11 exposed a real-browser migration/state-detection defect after the owner removed the legacy-installed Network Recorder through Yandex Browser. Preview `4.0.0-preview.31` supersedes it as the current test candidate and passed Windows validation/build runs `36945415272` and `36945552459`. Preview.31 keeps durable ownership/browser-only recovery but restores the old v3.0.2 non-destructive registry registration path: update only `path` and `version`, never delete/recreate the external-extension key during install/update.
+Preview.11 exposed a real-browser migration/state-detection defect after the owner removed the legacy-installed Network Recorder through Yandex Browser. Preview `4.0.0-preview.33` supersedes it as the current test candidate and passed Windows validation/build runs `36946218482` and `36946267122`. Preview.33 keeps the old v3.0.2 non-destructive registry path for normal install/update, while blocked or same-value reinstall uses a browser-acknowledged remove/wait/re-register recovery handshake. Chromium state value 2 is treated as `EXTERNAL_EXTENSION_UNINSTALLED`, not installed.
 
 The remaining gate is owner-side verification of the corrected reinstall/migration path, followed by a real later-version extension update.
 
@@ -90,4 +90,14 @@ For install/reinstall validation, the external acceptance criterion is actual br
 
 - source: owner runtime observation + preview.31 design
 - authority: owner-runtime-evidence + verified-repository
+- status: active
+
+## SM-011 — fixed sleeps are not browser acknowledgement
+
+A fixed delay between external-registry changes is not evidence that Chromium/Yandex has processed the first change. The Windows external registry loader is asynchronous and preference cleanup can lag.
+
+For recovery from explicit external uninstall or a same-value reinstall, wait on browser-owned observable state: after removing the owned key, poll until the old profile/uninstall state is gone, then register again. After registration, poll until a non-uninstalled profile state appears. Only then may the installer report live success.
+
+- source: Chromium external registry loader behavior + owner runtime observation + preview.33 implementation/CI
+- authority: upstream-source + owner-runtime-evidence + verified-ci
 - status: active
