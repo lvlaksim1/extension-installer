@@ -19,14 +19,14 @@
 ## EI-PM-004 — integrate Network Recorder
 - status: active; corrected real-browser migration/reinstall retest pending
 - source: owner directive
-- result so far: Network Recorder v1.6.0 source is in its own public repository, signing secret is GitHub-hosted, signed prerelease preserves the original Extension ID, catalog entry is active, and ExtensionInstaller resolves/verifies it successfully. Owner-side preview.11 testing exposed a legacy-registration/manual-browser-removal defect; preview.33 contains the current CI-verified correction: v3-style normal registration, durable ownership, explicit Chromium state=2 removal detection, and browser-acknowledged live reset/reinstall.
-- remaining: owner-side preview.33 real browser appearance plus install -> uninstall -> reinstall verification in one running Yandex Browser session, then a real later-version update test.
+- result so far: Network Recorder v1.6.0 source is in its own public repository, signing secret is GitHub-hosted, signed prerelease preserves the original Extension ID, catalog entry is active, and ExtensionInstaller resolves/verifies it successfully. Owner-side preview.11 testing exposed a legacy-registration/manual-browser-removal defect; preview.35 contains the current CI-verified correction: v3-style active same-version reinstall without unnecessary reset, genuine blocked-state recovery, durable ownership, and foreground-owned result UI.
+- remaining: owner-side preview.35 `Переустановить` + foreground-dialog verification, then one final no-restart cycle, then a real later-version update test.
 
 ## EI-PM-005 — make ExtensionInstaller installable/updatable
 - status: completed
 - source: owner directive
 - result: single Inno Setup EXE, fixed AppId, per-user installation, in-place update, obsolete installed CMD cleanup, optional removal of application data on uninstall.
-- current verified setup: `4.0.0-preview.33`; build run `36946267122`.
+- current verified setup: `4.0.0-preview.35`; build run `36947870281`.
 
 ## EI-PM-006 — coordinate extension ecosystem
 - status: active
