@@ -180,25 +180,23 @@ jobs:
 
           $root = Join-Path $env:RUNNER_TEMP 'network-recorder-prerelease'
           New-Item -ItemType Directory -Path $root -Force | Out-Null
-          $crx = Join-Path $root 'Network_Recorder_v1.6.0.crx'
-          $descriptorPath = Join-Path $root 'extension-release.json'
 
-          Invoke-WebRequest -UseBasicParsing -Uri 'https://github.com/lvlaksim1/network-recorder/releases/download/network-recorder-v1.6.0-preview-1/Network_Recorder_v1.6.0.crx' -OutFile $crx
-          Invoke-WebRequest -UseBasicParsing -Uri 'https://github.com/lvlaksim1/network-recorder/releases/download/network-recorder-v1.6.0-preview-1/extension-release.json' -OutFile $descriptorPath
+          $entry = [pscustomobject]@{
+            slug = 'network-recorder'
+            repository = 'lvlaksim1/network-recorder'
+            extension_id = 'paolfcaakecapidipfcfbbhgkpcmgcip'
+            channel = 'prerelease'
+          }
+          $resolved = Resolve-LatestSignedExtensionRelease $entry $root
+          if ([string]$resolved.Version -cne '1.7.0') { throw ('Unexpected latest prerelease version: ' + [string]$resolved.Version) }
+          if ([string]$resolved.ExtensionId -cne 'paolfcaakecapidipfcfbbhgkpcmgcip') { throw 'Resolved Extension ID mismatch.' }
+          if (-not (Test-Path -LiteralPath $resolved.CrxPath -PathType Leaf)) { throw 'Resolved CRX missing.' }
 
-          $descriptor = Read-ExtensionReleaseDescriptor $descriptorPath
-          if ([string]$descriptor.slug -cne 'network-recorder') { throw 'Unexpected slug.' }
-          if ([string]$descriptor.version -cne '1.6.0') { throw 'Unexpected version.' }
-          if ([string]$descriptor.extension_id -cne 'paolfcaakecapidipfcfbbhgkpcmgcip') { throw 'Descriptor Extension ID mismatch.' }
-
-          $actualSha = Get-ReleaseFileSha256 $crx
-          if ($actualSha -cne ([string]$descriptor.crx_sha256).ToLowerInvariant()) { throw 'Published CRX SHA-256 mismatch.' }
-
-          $inspection = [Crx3PackageInspector]::Inspect($crx)
+          $inspection = [Crx3PackageInspector]::Inspect($resolved.CrxPath)
           if (-not $inspection.SignatureValid) { throw 'Published CRX3 signature invalid.' }
           if ([string]$inspection.ExtensionId -cne 'paolfcaakecapidipfcfbbhgkpcmgcip') { throw 'Published CRX Extension ID mismatch.' }
 
-          Write-Host ('NETWORK_RECORDER_RELEASE_VALID ID=' + $inspection.ExtensionId + ' SHA256=' + $actualSha)
+          Write-Host ('NETWORK_RECORDER_RELEASE_VALID VERSION=' + $resolved.Version + ' ID=' + $inspection.ExtensionId + ' SHA256=' + $resolved.Sha256)
 
       - name: Report
         if: always()
