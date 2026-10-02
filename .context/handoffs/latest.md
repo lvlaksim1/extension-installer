@@ -1,6 +1,6 @@
 # Latest handoff
 
-Updated: 2026-10-02 03:49 MSK
+Updated: 2026-10-02 04:32 MSK
 
 ## Manager
 
@@ -54,15 +54,19 @@ Root cause and correction:
 
 - repository: `lvlaksim1/network-recorder`
 - manager: none; ecosystem coordination remains here
-- source baseline: `1.6.0`
+- historical baseline: `1.6.0`
+- current development version: `1.7.0`
 - Extension ID: `paolfcaakecapidipfcfbbhgkpcmgcip`
 - signing secret name: `RSA_PRIVATE_KEY_BASE64` (value never persisted here)
-- verified prerelease: `network-recorder-v1.6.0-preview-1`
-- CRX SHA-256: `3516149ea638f6ff10626c1ae974c92627e220c1e86b5c5195abdea4700c26cf`
+- current verified prerelease: `network-recorder-v1.7.0-preview-7`
+- CRX SHA-256: `3db553fc93c12ba4fb6a5e2ce415f7c69e352d502b7b8fed5ed02fc952333bef`
+- build/sign/release run: `36951295240` — success
 - catalog channel: `prerelease`
+- v1.7.0 default capture: API bodies + textual page resources enabled; binary bodies, file/blob bytes, deep diagnostics and Chromium Tracing disabled
+- v1.7.0 ZIP: selective DEFLATE, payload deduplication and per-category `archiveSizeBreakdown` in `session-manifest.json`
 
 ## Resume point
 
-Owner installs ExtensionInstaller `4.0.0-preview.35` over preview.33 with Yandex Browser open, verifies `Переустановить` no longer times out, and confirms the app + success dialog stay in front of the browser.
+Owner already confirmed ExtensionInstaller preview.35 works. Resume by updating Network Recorder to 1.7.0 through ExtensionInstaller, recording the same representative page for ~10 seconds with default lightweight options, and comparing ZIP size / `archiveSizeBreakdown`.
 
 Stable publication remains gated on real install/update verification and explicit owner approval.
