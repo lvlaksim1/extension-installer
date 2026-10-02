@@ -363,14 +363,20 @@ function Install-SelectedExtension {
 
         $browserRunning = [bool](Get-ReleaseProperty $result "BrowserWasRunning" $false)
         $wasRemovedByUser = [bool](Get-ReleaseProperty $before "RemovedByUser" $false)
-        Write-AppLog ("Установка подготовлена: id=" + $result.ExtensionId + "; version=" + $result.Version + "; browser_running=" + $browserRunning + "; removed_by_user=" + $wasRemovedByUser + "; registry_pulsed=" + [bool](Get-ReleaseProperty $result "RegistrationPulsed" $false))
+        $wasRemovedByInstaller = [bool](Get-ReleaseProperty $before "RemovedByInstaller" $false)
+        $wasBrowserOnly = [bool](Get-ReleaseProperty $before "BrowserOnly" $false)
+        Write-AppLog ("Установка подготовлена: id=" + $result.ExtensionId + "; version=" + $result.Version + "; browser_running=" + $browserRunning + "; removed_by_user=" + $wasRemovedByUser + "; removed_by_installer=" + $wasRemovedByInstaller + "; browser_only=" + $wasBrowserOnly + "; registry_in_place=" + [bool](Get-ReleaseProperty $result "RegistrationInPlace" $false) + "; registry_values_changed=" + [bool](Get-ReleaseProperty $result "RegistrationValuesChanged" $false))
 
         $message = ""
         if ($browserRunning) {
             Start-Sleep -Milliseconds 1800
             $after = Get-InstallSnapshot $entry
 
-            if ($wasRemovedByUser -or -not $after.BrowserInstalled) {
+            # BrowserOnly/removed states are ambiguous because Yandex may retain a stale
+            # extensions.settings entry even when the extension is not visible/active.
+            # Force the browser-owned confirmation path for these recovery cases instead
+            # of trusting profile presence as proof that the extension actually loaded.
+            if ($wasRemovedByUser -or $wasRemovedByInstaller -or $wasBrowserOnly -or -not $after.BrowserInstalled) {
                 $tuneOpened = Open-ReleaseYandexTunePage
                 $crxShown = Show-ReleaseCrxInExplorer ([string]$result.CrxPath)
                 Write-AppLog ("No-restart activation UI: tune_opened=" + $tuneOpened + "; crx_selected=" + $crxShown)
