@@ -199,3 +199,14 @@ Network Recorder v1.7.0 no longer duplicates JavaScript response bytes into a se
 
 - source: v1.7.0 implementation + successful signed build
 - authority: verified-repository + verified-ci
+
+## B26 — prerelease API arrays must be explicitly enumerated on Windows PowerShell 5.1
+
+Windows PowerShell 5.1 can expose a top-level JSON array returned by Invoke-RestMethod as a single Object[] pipeline item. If code then relies on member enumeration, properties such as `assets` can be merged across multiple GitHub releases.
+
+The Network Recorder 1.7.0 publication created the first real two-prerelease condition and exposed this: preview.35 falsely saw two `extension-release.json` assets because it effectively combined the 1.6.0 and 1.7.0 release asset lists.
+
+Current rule: assign the REST response, explicitly iterate it into a flat release collection, then filter/select one release before resolving its assets.
+
+- source: owner runtime screenshot + live GitHub release state + Windows PowerShell 5.1 validation run 36951995805
+- authority: owner-runtime-evidence + verified-repository + verified-ci
