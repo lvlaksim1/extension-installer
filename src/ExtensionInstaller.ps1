@@ -169,6 +169,35 @@ function Get-InstallSnapshot {
     }
 }
 
+function Activate-ExtensionInstallerWindow {
+    try {
+        if ($null -eq $script:Form -or $script:Form.IsDisposed) { return $false }
+        if ($script:Form.WindowState -eq [System.Windows.Forms.FormWindowState]::Minimized) {
+            $script:Form.WindowState = [System.Windows.Forms.FormWindowState]::Normal
+        }
+        $script:Form.Show()
+        $script:Form.BringToFront()
+        $script:Form.Activate()
+        [System.Windows.Forms.Application]::DoEvents()
+        return (Activate-ReleaseWindowHandle -Handle $script:Form.Handle)
+    }
+    catch { return $false }
+}
+
+function Show-ExtensionInstallerMessage {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Text,
+        [Parameter(Mandatory = $true)]
+        [string]$Caption,
+        [System.Windows.Forms.MessageBoxButtons]$Buttons = [System.Windows.Forms.MessageBoxButtons]::OK,
+        [System.Windows.Forms.MessageBoxIcon]$Icon = [System.Windows.Forms.MessageBoxIcon]::Information
+    )
+
+    [void](Activate-ExtensionInstallerWindow)
+    return [System.Windows.Forms.MessageBox]::Show($script:Form, $Text, $Caption, $Buttons, $Icon)
+}
+
 function Set-Busy {
     param([bool]$Busy)
 
@@ -372,8 +401,6 @@ function Install-SelectedExtension {
         $message = ""
         if ($browserRunning) {
             if ($browserObservedInstalled) {
-                $activated = Activate-ReleaseYandexBrowser
-                Write-AppLog ("Yandex foreground after confirmed live install: activated=" + $activated)
                 $message = (
                     $name + " " + $result.Version + " установлен в уже работающий Яндекс.Браузер без перезапуска." +
                     [Environment]::NewLine + [Environment]::NewLine +
@@ -400,21 +427,11 @@ function Install-SelectedExtension {
             )
         }
 
-        [System.Windows.Forms.MessageBox]::Show(
-            $message,
-            "ExtensionInstaller",
-            [System.Windows.Forms.MessageBoxButtons]::OK,
-            [System.Windows.Forms.MessageBoxIcon]::Information
-        ) | Out-Null
+        Show-ExtensionInstallerMessage -Text $message -Caption "ExtensionInstaller" -Buttons ([System.Windows.Forms.MessageBoxButtons]::OK) -Icon ([System.Windows.Forms.MessageBoxIcon]::Information) | Out-Null
     }
     catch {
         Write-AppLog $_.Exception.Message "ERROR"
-        [System.Windows.Forms.MessageBox]::Show(
-            $_.Exception.Message,
-            "Ошибка установки",
-            [System.Windows.Forms.MessageBoxButtons]::OK,
-            [System.Windows.Forms.MessageBoxIcon]::Error
-        ) | Out-Null
+        Show-ExtensionInstallerMessage -Text $_.Exception.Message -Caption "Ошибка установки" -Buttons ([System.Windows.Forms.MessageBoxButtons]::OK) -Icon ([System.Windows.Forms.MessageBoxIcon]::Error) | Out-Null
     }
     finally {
         Set-Busy $false
