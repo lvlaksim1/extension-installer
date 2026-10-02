@@ -388,34 +388,56 @@ function Install-SelectedExtension {
 
         $before = Get-InstallSnapshot $entry
         $name = [string](Get-ReleaseProperty $entry "name" "")
-        Write-AppLog ("Установка: " + $name + " " + [string]$script:ResolvedRelease.Version)
+        $beforeBrowserInstalled = [bool](Get-ReleaseProperty $before "BrowserInstalled" $false)
+        $beforeVersion = [string](Get-ReleaseProperty $before "InstalledVersion" "")
+        $targetVersion = [string]$script:ResolvedRelease.Version
+        $isVersionUpdate = (
+            $beforeBrowserInstalled -and
+            -not [string]::IsNullOrWhiteSpace($beforeVersion) -and
+            $beforeVersion -cne $targetVersion
+        )
+
+        Write-AppLog ("Установка: " + $name + " " + $targetVersion)
+        $installWatch = [System.Diagnostics.Stopwatch]::StartNew()
         $result = Install-ValidatedSignedRelease $script:ResolvedRelease $script:InstallRoot
+        $installWatch.Stop()
 
         $browserRunning = [bool](Get-ReleaseProperty $result "BrowserWasRunning" $false)
+        $browserConfirmationRequired = [bool](Get-ReleaseProperty $result "BrowserConfirmationRequired" $false)
         $browserObservedInstalled = [bool](Get-ReleaseProperty $result "BrowserObservedInstalled" $false)
         $liveResetPerformed = [bool](Get-ReleaseProperty $result "LiveResetPerformed" $false)
         $liveResetCleared = [bool](Get-ReleaseProperty $result "LiveResetCleared" $false)
         $registrationValuesChanged = [bool](Get-ReleaseProperty $result "RegistrationValuesChanged" $false)
-        Write-AppLog ("Установка подготовлена: id=" + $result.ExtensionId + "; version=" + $result.Version + "; browser_running=" + $browserRunning + "; live_reset=" + $liveResetPerformed + "; live_reset_cleared=" + $liveResetCleared + "; live_reset_ms=" + [int](Get-ReleaseProperty $result "LiveResetElapsedMilliseconds" 0) + "; registry_in_place=" + [bool](Get-ReleaseProperty $result "RegistrationInPlace" $false) + "; registry_values_changed=" + $registrationValuesChanged + "; browser_observed_installed=" + $browserObservedInstalled + "; browser_observe_ms=" + [int](Get-ReleaseProperty $result "BrowserObserveElapsedMilliseconds" 0))
+        Write-AppLog ("Установка подготовлена: id=" + $result.ExtensionId + "; version=" + $result.Version + "; install_ms=" + [int]$installWatch.ElapsedMilliseconds + "; browser_running=" + $browserRunning + "; live_reset=" + $liveResetPerformed + "; live_reset_cleared=" + $liveResetCleared + "; live_reset_ms=" + [int](Get-ReleaseProperty $result "LiveResetElapsedMilliseconds" 0) + "; registry_in_place=" + [bool](Get-ReleaseProperty $result "RegistrationInPlace" $false) + "; registry_values_changed=" + $registrationValuesChanged + "; browser_confirmation_required=" + $browserConfirmationRequired + "; browser_observed_installed=" + $browserObservedInstalled + "; browser_observe_ms=" + [int](Get-ReleaseProperty $result "BrowserObserveElapsedMilliseconds" 0))
 
         $message = ""
         if ($browserRunning) {
-            if ($browserObservedInstalled) {
+            if ($browserConfirmationRequired -and -not $browserObservedInstalled) {
                 $message = (
-                    $name + " " + $result.Version + " установлен в уже работающий Яндекс.Браузер без перезапуска." +
+                    "Регистрация " + $name + " " + $result.Version + " восстановлена, но Яндекс.Браузер пока не подтвердил повторную загрузку расширения." +
                     [Environment]::NewLine + [Environment]::NewLine +
-                    $(if ($liveResetPerformed) { "Предыдущее external-состояние браузера было сброшено через его live registry watcher и подтверждено самим браузером." } else { "Регистрация выполнена по схеме ExtensionInstaller v3.0.2." })
+                    "ExtensionInstaller не открывал новое окно браузера. Если расширение не появится в течение нескольких секунд, проверьте его состояние в уже открытом Яндекс.Браузере."
+                )
+            }
+            elseif ($isVersionUpdate) {
+                $message = (
+                    $name + " обновлён до версии " + $result.Version + "." +
+                    [Environment]::NewLine + [Environment]::NewLine +
+                    "Перезапуск Яндекс.Браузера не требуется."
+                )
+            }
+            elseif ($beforeBrowserInstalled) {
+                $message = (
+                    $name + " " + $result.Version + " переустановлен." +
+                    [Environment]::NewLine + [Environment]::NewLine +
+                    "Перезапуск Яндекс.Браузера не требуется."
                 )
             }
             else {
-                $tuneOpened = Open-ReleaseYandexTunePage
-                $crxShown = Show-ReleaseCrxInExplorer ([string]$result.CrxPath)
-                Write-AppLog ("Browser did not confirm live load; activation UI: tune_opened=" + $tuneOpened + "; crx_selected=" + $crxShown)
-
                 $message = (
-                    "Регистрация " + $name + " " + $result.Version + " записана, но Яндекс.Браузер не подтвердил загрузку расширения за контрольное время." +
+                    $name + " " + $result.Version + " зарегистрирован." +
                     [Environment]::NewLine + [Environment]::NewLine +
-                    "Перезапуск не требуется. Открыта browser://tune и в Проводнике выделен проверенный CRX для штатного подтверждения браузером."
+                    "Перезапуск Яндекс.Браузера не требуется; браузер подхватит расширение автоматически."
                 )
             }
         }
@@ -438,7 +460,6 @@ function Install-SelectedExtension {
         Update-UiFromState $entry
     }
 }
-
 function Uninstall-SelectedExtension {
     $entry = Get-SelectedCatalogEntry
     if ($null -eq $entry) { return }
