@@ -53,7 +53,7 @@ Catalog Extension ID is a trust anchor. Descriptor ID and CRX-derived ID must eq
 
 ## B8 — Network Recorder verified signing
 
-Network Recorder v1.6.0 is signed in GitHub Actions with secret `RSA_PRIVATE_KEY_BASE64`. Verified prerelease `network-recorder-v1.6.0-preview-1` preserves Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip` and has CRX SHA-256 `3516149ea638f6ff10626c1ae974c92627e220c1e86b5c5195abdea4700c26cf`.
+Network Recorder is signed in GitHub Actions with secret `RSA_PRIVATE_KEY_BASE64`. Current verified prerelease `network-recorder-v1.7.0-preview-7` preserves Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip` and has CRX SHA-256 `3db553fc93c12ba4fb6a5e2ce415f7c69e352d502b7b8fed5ed02fc952333bef`. Build run `36951295240` passed strict JavaScript syntax checks, signing and signed-output validation.
 
 - source: verified network-recorder workflow + independent ExtensionInstaller validation
 - authority: verified-ci
@@ -176,3 +176,26 @@ After successful live install, ExtensionInstaller must not intentionally foregro
 
 - source: owner UX directive + preview.35 implementation
 - authority: owner-directive + verified-repository
+
+## B24 — Network Recorder normal mode is selective, not forensic-full
+
+Owner observed that v1.6.0 could produce more than 100 MB in roughly 10 seconds even with Chromium Tracing disabled. Source audit showed Tracing controlled only one artifact; normal capture still stored nearly all response bodies, deep end-of-session snapshots, downloads/blobs, duplicate JavaScript payloads, and a ZIP that used STORE without compression.
+
+Network Recorder v1.7.0 therefore defines a size-conscious default profile:
+- full network metadata remains recorded;
+- API XHR/Fetch bodies are enabled;
+- textual page resources are enabled;
+- all binary resource bodies are disabled;
+- download/blob byte capture is disabled while metadata remains;
+- deep diagnostics (IndexedDB/CacheStorage/MHTML/DOMSnapshot) is disabled;
+- Chromium Tracing is disabled.
+
+- source: owner runtime observation + verified source audit + v1.7.0 implementation/CI
+- authority: owner-runtime-evidence + verified-repository + verified-ci
+
+## B25 — archive payloads should be stored once and compressed where useful
+
+Network Recorder v1.7.0 no longer duplicates JavaScript response bytes into a separate scripts/files copy; script manifests reference the response-body file. Large request bodies are not repeated inline in HAR, and realtime WebSocket summaries do not duplicate raw frame payloads. ZIP entries use DEFLATE for compressible data when supported/beneficial and STORE for already-compressed binary data or fallback. The session manifest records an archive size breakdown.
+
+- source: v1.7.0 implementation + successful signed build
+- authority: verified-repository + verified-ci
