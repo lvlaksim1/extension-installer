@@ -1,6 +1,6 @@
 # Latest handoff
 
-Updated: 2026-10-02 03:22 MSK
+Updated: 2026-10-02 03:30 MSK
 
 ## Manager
 
@@ -37,16 +37,16 @@ Root cause and correction:
 - preview.24 added no-restart install fallback, but owner testing found that ExtensionInstaller-driven uninstall could erase its own active state before Yandex removed the profile entry, causing a false foreign classification.
 - preview.26 added durable `ownership.json` and browser-only recovery, but owner testing then proved its “installed” state could still be false: Network Recorder was absent from the real Yandex extensions UI.
 - re-audit of the canonical v3.0.2 `ExtensionInstaller.cmd` showed that the old working install path NEVER deleted/recreated the registry child key. It updated only `path` and `version` in place. v3 also provided a user32 foreground bridge and `browser://tune/` confirmation workflow.
-- preview.31 restores that exact non-destructive registry behavior, keeps the newer ownership safeguards, ports the v3 foreground activation bridge, and refuses to treat stale browser-profile presence as proof of successful live load in recovery/same-value cases.
+- preview.33 keeps v3's non-destructive registration for normal install/update. For blocked or same-value reinstall in a running browser, it performs a controlled browser-owned reset: remove the owned key, wait for Yandex's registry watcher to clear old external state, re-register, then wait for a non-uninstalled browser profile state. Chromium `state=2` is explicitly treated as `EXTERNAL_EXTENSION_UNINSTALLED`.
 
 ## Current installer preview
 
-- version: `4.0.0-preview.31`
-- tag: `installer-preview-31`
-- asset: `ExtensionInstaller_Setup_v4.0.0-preview.31.exe`
-- SHA-256: `7a77f01e7c1484f9794737a67cf77d23f75f688f0dd831c8b408fb0d0e802c04`
-- validation run: `36945415272` — success
-- build run: `36945552459` — success
+- version: `4.0.0-preview.33`
+- tag: `installer-preview-33`
+- asset: `ExtensionInstaller_Setup_v4.0.0-preview.33.exe`
+- SHA-256: `f8d4275762e3ff264f5e20e39b34dc47f346de62581374a068ace7f2fa0d5a46`
+- validation run: `36946218482` — success
+- build run: `36946267122` — success
 - retained Actions artifacts: none
 
 ## Network Recorder
@@ -62,6 +62,6 @@ Root cause and correction:
 
 ## Resume point
 
-Owner installs ExtensionInstaller `4.0.0-preview.31` over preview.26 with Yandex Browser open and verifies ACTUAL browser appearance after reinstall, not just installer status. Then test uninstall -> check -> reinstall in the same browser session.
+Owner installs ExtensionInstaller `4.0.0-preview.33` with Yandex Browser open and verifies ACTUAL browser appearance after the browser-acknowledged live reset/reinstall, not just installer status. Then test uninstall -> check -> reinstall in the same browser session.
 
 Stable publication remains gated on real install/update verification and explicit owner approval.
