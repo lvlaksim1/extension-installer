@@ -334,6 +334,108 @@ function Test-ReleaseYandexBrowserRunning {
 }
 
 
+
+function Initialize-ReleaseYandexWindowBridge {
+    if ("ExtensionInstallerYandexWindowBridge" -as [type]) { return }
+    Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class ExtensionInstallerYandexWindowBridge
+{
+    [DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
+    [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
+    [DllImport("user32.dll")] public static extern bool BringWindowToTop(IntPtr hWnd);
+    [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr hWnd);
+    [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+    [DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
+    [DllImport("user32.dll")] public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+    [DllImport("user32.dll")] public static extern IntPtr SetActiveWindow(IntPtr hWnd);
+    [DllImport("user32.dll")] public static extern IntPtr SetFocus(IntPtr hWnd);
+}
+'@
+}
+
+function Get-ReleaseYandexWindowProcess {
+    Initialize-ReleaseYandexWindowBridge
+    $windows = New-Object System.Collections.Generic.List[object]
+    foreach ($process in @(Get-Process -Name "browser" -ErrorAction SilentlyContinue)) {
+        try {
+            $process.Refresh()
+            if ($process.MainWindowHandle -eq 0) { continue }
+            $isYandex = $false
+            try { if ([string]$process.Path -match '(?i)\\Yandex\\') { $isYandex = $true } } catch { }
+            try { if ([string]$process.MainModule.FileVersionInfo.ProductName -match '(?i)Yandex|Яндекс') { $isYandex = $true } } catch { }
+            [void]$windows.Add([pscustomobject]@{ Process = $process; IsYandex = $isYandex })
+        }
+        catch { }
+    }
+
+    if ($windows.Count -eq 0) { return $null }
+    try {
+        $foreground = [ExtensionInstallerYandexWindowBridge]::GetForegroundWindow()
+        foreach ($item in $windows) {
+            if ($item.IsYandex -and [IntPtr]$item.Process.MainWindowHandle -eq $foreground) { return $item.Process }
+        }
+    }
+    catch { }
+
+    $verified = @($windows | Where-Object { $_.IsYandex })
+    if ($verified.Count -gt 0) { return $verified[0].Process }
+    return $windows[0].Process
+}
+
+function Activate-ReleaseYandexBrowser {
+    try {
+        Initialize-ReleaseYandexWindowBridge
+        $process = Get-ReleaseYandexWindowProcess
+        if ($null -eq $process -or $process.MainWindowHandle -eq 0) { return $false }
+
+        $handle = [IntPtr]$process.MainWindowHandle
+        if ([ExtensionInstallerYandexWindowBridge]::IsIconic($handle)) {
+            [void][ExtensionInstallerYandexWindowBridge]::ShowWindowAsync($handle, 9)
+            Start-Sleep -Milliseconds 120
+        }
+
+        $currentThread = [ExtensionInstallerYandexWindowBridge]::GetCurrentThreadId()
+        $foreground = [ExtensionInstallerYandexWindowBridge]::GetForegroundWindow()
+        [uint32]$foregroundProcessId = 0
+        [uint32]$targetProcessId = 0
+        [uint32]$foregroundThread = 0
+        [uint32]$targetThread = [ExtensionInstallerYandexWindowBridge]::GetWindowThreadProcessId($handle, [ref]$targetProcessId)
+        if ($foreground -ne [IntPtr]::Zero) {
+            $foregroundThread = [ExtensionInstallerYandexWindowBridge]::GetWindowThreadProcessId($foreground, [ref]$foregroundProcessId)
+        }
+
+        $attachedForeground = $false
+        $attachedTarget = $false
+        try {
+            if ($foregroundThread -ne 0 -and $foregroundThread -ne $currentThread) {
+                $attachedForeground = [ExtensionInstallerYandexWindowBridge]::AttachThreadInput($currentThread, $foregroundThread, $true)
+            }
+            if ($targetThread -ne 0 -and $targetThread -ne $currentThread) {
+                $attachedTarget = [ExtensionInstallerYandexWindowBridge]::AttachThreadInput($currentThread, $targetThread, $true)
+            }
+            [void][ExtensionInstallerYandexWindowBridge]::BringWindowToTop($handle)
+            [void][ExtensionInstallerYandexWindowBridge]::SetForegroundWindow($handle)
+            [void][ExtensionInstallerYandexWindowBridge]::SetActiveWindow($handle)
+            [void][ExtensionInstallerYandexWindowBridge]::SetFocus($handle)
+        }
+        finally {
+            if ($attachedTarget) {
+                [void][ExtensionInstallerYandexWindowBridge]::AttachThreadInput($currentThread, $targetThread, $false)
+            }
+            if ($attachedForeground) {
+                [void][ExtensionInstallerYandexWindowBridge]::AttachThreadInput($currentThread, $foregroundThread, $false)
+            }
+        }
+
+        Start-Sleep -Milliseconds 100
+        return ([ExtensionInstallerYandexWindowBridge]::GetForegroundWindow() -eq $handle)
+    }
+    catch { return $false }
+}
+
 function Get-ReleaseYandexBrowserExecutablePath {
     foreach ($process in @(Get-Process -Name "browser" -ErrorAction SilentlyContinue)) {
         try {
