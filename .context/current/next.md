@@ -1,10 +1,11 @@
 # Next actions
 
-1. Owner installs `ExtensionInstaller_Setup_v4.0.0-preview.35.exe` over preview.33 while leaving Yandex Browser open.
-2. With Network Recorder already installed and visible in Yandex Browser, click `Переустановить`.
-3. Expected result: no live-reset timeout; active same-version reinstall uses the canonical v3.0.2 in-place `path/version` update and remains installed in the same browser session.
-4. After success, ExtensionInstaller must restore itself above Yandex Browser and the success dialog must be modal/owned by the main ExtensionInstaller window rather than appearing behind the browser.
-5. Verify Network Recorder remains visible and operational with Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`.
-6. If both checks pass, run one final install -> uninstall -> install/reinstall cycle without browser restart.
-7. Then promote Network Recorder v1.6.0 to stable and test a later real extension update.
-8. Stable ExtensionInstaller publication remains owner-controlled.
+1. Owner opens the already-working ExtensionInstaller preview `4.0.0-preview.35` and presses `Проверить`; catalog channel `prerelease` should expose Network Recorder `1.7.0`.
+2. Update Network Recorder from 1.6.0 to 1.7.0 without restarting Yandex Browser.
+3. Open Network Recorder settings and verify the lightweight defaults: API bodies ON, textual page resources ON; all resource bodies OFF, files/blob bytes OFF, deep diagnostics OFF, Chromium Tracing OFF.
+4. Record the same representative page for about 10 seconds without enabling the heavy options.
+5. Compare the resulting ZIP size with the former >100 MB / ~10 s behavior.
+6. Open `session-manifest.json` and inspect `archiveSizeBreakdown` if the ZIP remains unexpectedly large; it reports uncompressed/archive bytes by category and compression savings.
+7. Verify the ZIP still contains usable network metadata, API evidence and textual page resources required for research.
+8. Based on the real owner test, tune defaults/limits only if necessary.
+9. Stable publication of Network Recorder and ExtensionInstaller remains owner-controlled.
