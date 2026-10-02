@@ -1,6 +1,6 @@
 # Current state
 
-Updated: 2026-10-02 03:30 MSK
+Updated: 2026-10-02 03:49 MSK
 
 - Repository: `lvlaksim1/extension-installer`.
 - Visibility: public.
@@ -41,13 +41,15 @@ Updated: 2026-10-02 03:30 MSK
 - The canonical v3.0.2 source `ExtensionInstaller.cmd` was re-audited as the behavioral reference. Its working registration path never deletes/recreates the extension registry key: it uses `New-Item -Force` and overwrites only `path` and `version` in `HKCU:\Software\Yandex\YandexBrowser\Extensions\<id>`. Its CRX3 signing algorithm and manifest public-key identity match the current Network Recorder release pipeline. v3 also includes a `user32.dll` window-activation bridge and a `browser://tune/` confirmation panel.
 - The preview.22–26 remove/recreate registry pulse was therefore a regression from v3 semantics: deleting the key can be observed by Chromium/Yandex as external uninstall before recreation.
 - Current `main` preserves v3.0.2 in-place registration for normal install/update, but adds a browser-owned recovery handshake for explicit uninstall/same-value reinstall: if Yandex still remembers the extension as externally uninstalled (including persisted state=2), ExtensionInstaller removes its registry key, waits up to 15 seconds for Yandex's live registry watcher to clear the old profile/killbit, and only then re-registers the exact verified CRX. It then waits up to 10 seconds for a non-uninstalled profile state before reporting live success.
-- Current verified installer preview: `4.0.0-preview.33`.
-- Release tag: `installer-preview-33`.
-- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.33.exe`.
-- Setup SHA-256: `f8d4275762e3ff264f5e20e39b34dc47f346de62581374a068ace7f2fa0d5a46`.
-- Windows validation run `36946218482` passed PowerShell 5.1 parsing, v3-style registration, ownership recovery, Chromium state=2 (`EXTERNAL_EXTENSION_UNINSTALLED`) detection, and published Network Recorder verification.
-- Windows build run `36946267122` passed installer build, payload validation, smoke tests and direct prerelease publication.
-- Retained GitHub Actions artifacts for run `36946267122`: none.
+- Owner-side preview.33 test confirmed real install and uninstall now work in the already-running Yandex Browser. Two residual defects remained: successful install brought Yandex to foreground above ExtensionInstaller/dialogs, and `Переустановить` incorrectly forced live reset for an already active same-version install, timing out with `профилей: 3; блокировок: 0`.
+- Preview.35 fixes both: active same-version installs with active browser profiles no longer enter destructive/reset recovery, and ExtensionInstaller restores its own window to foreground before showing an owned modal result dialog.
+- Current verified installer preview: `4.0.0-preview.35`.
+- Release tag: `installer-preview-35`.
+- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.35.exe`.
+- Setup SHA-256: `a1c36d77dd3f02d378cf4930a011a2b36ba3782574d3d0c382755845488408cd`.
+- Windows validation run `36947823138` passed PowerShell 5.1 validation including the explicit rule that active same-version reinstall with 3 active profiles and 0 blockers must not trigger live reset.
+- Windows build run `36947870281` passed installer build, payload validation, smoke tests and direct prerelease publication.
+- Retained GitHub Actions artifacts for run `36947870281`: none.
 - Stable ExtensionInstaller publication has not been designated.
-- Preview.33 supersedes preview.31 because it keeps v3.0.2 in-place behavior for normal registration but adds an acknowledged live reset only when Yandex is blocking a reinstall or the same registration must be re-applied.
-- Next external gate: owner installs preview 4.0.0-preview.33 over the current preview with Yandex Browser left open and runs reinstall. Success means Network Recorder actually appears in the browser UI without restart; ExtensionInstaller must not claim success unless the browser-side non-uninstalled state is observed.
+- Preview.35 supersedes preview.33 because it keeps the browser-acknowledged recovery only for genuinely blocked/missing-active-profile states, while normal active same-version reinstall stays on the v3.0.2 in-place path; result dialogs are now owned by the ExtensionInstaller window and the app is restored to foreground.
+- Next external gate: owner installs preview 4.0.0-preview.35 over preview.33 with Yandex Browser left open, verifies `Переустановить` succeeds without the 15-second reset error, and confirms the ExtensionInstaller window plus success dialog remain above the browser.
