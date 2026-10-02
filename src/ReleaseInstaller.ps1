@@ -406,14 +406,17 @@ function Get-ReleaseYandexWindowProcess {
     return $windows[0].Process
 }
 
-function Activate-ReleaseYandexBrowser {
+function Activate-ReleaseWindowHandle {
+    param(
+        [Parameter(Mandatory = $true)]
+        [IntPtr]$Handle
+    )
+
     try {
         Initialize-ReleaseYandexWindowBridge
-        $process = Get-ReleaseYandexWindowProcess
-        if ($null -eq $process -or $process.MainWindowHandle -eq 0) { return $false }
-        $handle = [IntPtr]$process.MainWindowHandle
-        if ([ExtensionInstallerYandexWindowBridge]::IsIconic($handle)) {
-            [void][ExtensionInstallerYandexWindowBridge]::ShowWindowAsync($handle, 9)
+        if ($Handle -eq [IntPtr]::Zero) { return $false }
+        if ([ExtensionInstallerYandexWindowBridge]::IsIconic($Handle)) {
+            [void][ExtensionInstallerYandexWindowBridge]::ShowWindowAsync($Handle, 9)
             Start-Sleep -Milliseconds 120
         }
         $currentThread = [ExtensionInstallerYandexWindowBridge]::GetCurrentThreadId()
@@ -421,7 +424,7 @@ function Activate-ReleaseYandexBrowser {
         [uint32]$foregroundProcessId = 0
         [uint32]$targetProcessId = 0
         [uint32]$foregroundThread = 0
-        [uint32]$targetThread = [ExtensionInstallerYandexWindowBridge]::GetWindowThreadProcessId($handle, [ref]$targetProcessId)
+        [uint32]$targetThread = [ExtensionInstallerYandexWindowBridge]::GetWindowThreadProcessId($Handle, [ref]$targetProcessId)
         if ($foreground -ne [IntPtr]::Zero) {
             $foregroundThread = [ExtensionInstallerYandexWindowBridge]::GetWindowThreadProcessId($foreground, [ref]$foregroundProcessId)
         }
@@ -434,17 +437,26 @@ function Activate-ReleaseYandexBrowser {
             if ($targetThread -ne 0 -and $targetThread -ne $currentThread) {
                 $attachedTarget = [ExtensionInstallerYandexWindowBridge]::AttachThreadInput($currentThread, $targetThread, $true)
             }
-            [void][ExtensionInstallerYandexWindowBridge]::BringWindowToTop($handle)
-            [void][ExtensionInstallerYandexWindowBridge]::SetForegroundWindow($handle)
-            [void][ExtensionInstallerYandexWindowBridge]::SetActiveWindow($handle)
-            [void][ExtensionInstallerYandexWindowBridge]::SetFocus($handle)
+            [void][ExtensionInstallerYandexWindowBridge]::BringWindowToTop($Handle)
+            [void][ExtensionInstallerYandexWindowBridge]::SetForegroundWindow($Handle)
+            [void][ExtensionInstallerYandexWindowBridge]::SetActiveWindow($Handle)
+            [void][ExtensionInstallerYandexWindowBridge]::SetFocus($Handle)
         }
         finally {
             if ($attachedTarget) { [void][ExtensionInstallerYandexWindowBridge]::AttachThreadInput($currentThread, $targetThread, $false) }
             if ($attachedForeground) { [void][ExtensionInstallerYandexWindowBridge]::AttachThreadInput($currentThread, $foregroundThread, $false) }
         }
         Start-Sleep -Milliseconds 100
-        return ([ExtensionInstallerYandexWindowBridge]::GetForegroundWindow() -eq $handle)
+        return ([ExtensionInstallerYandexWindowBridge]::GetForegroundWindow() -eq $Handle)
+    }
+    catch { return $false }
+}
+
+function Activate-ReleaseYandexBrowser {
+    try {
+        $process = Get-ReleaseYandexWindowProcess
+        if ($null -eq $process -or $process.MainWindowHandle -eq 0) { return $false }
+        return (Activate-ReleaseWindowHandle -Handle ([IntPtr]$process.MainWindowHandle))
     }
     catch { return $false }
 }
@@ -612,13 +624,13 @@ function Wait-ReleaseYandexExternalStateCleared {
     do {
         $blocked = @(Get-ReleaseYandexExternalUninstallProfiles $ExtensionId)
         $profiles = @(Get-ReleaseYandexProfileInstallations $ExtensionId)
-        if ($blocked.Count -eq 0 -and $profiles.Count -eq 0) {
+        if ($blocked.Count -eq 0) {
             $watch.Stop()
             return [pscustomobject]@{
                 Cleared = $true
                 ElapsedMilliseconds = [int]$watch.ElapsedMilliseconds
                 RemainingBlockedProfiles = 0
-                RemainingProfileEntries = 0
+                RemainingProfileEntries = $profiles.Count
             }
         }
         Start-Sleep -Milliseconds $PollMilliseconds
@@ -670,6 +682,20 @@ function Wait-ReleaseYandexProfileInstalled {
         ElapsedMilliseconds = [int]$watch.ElapsedMilliseconds
         ProfileCount = 0
     }
+}
+
+function Test-ReleaseYandexLiveResetRequired {
+    param(
+        [bool]$BrowserRunning,
+        [int]$BlockedProfileCount,
+        [int]$ActiveProfileCount,
+        [bool]$HasOldRegistration
+    )
+
+    if (-not $BrowserRunning) { return $false }
+    if ($BlockedProfileCount -gt 0) { return $true }
+    if ($HasOldRegistration -and $ActiveProfileCount -eq 0) { return $true }
+    return $false
 }
 
 function Reset-ReleaseYandexExternalRegistrationLive {
@@ -913,19 +939,7 @@ function Install-ValidatedSignedRelease($ResolvedRelease, [string]$InstallRoot) 
         # updated in place. Recovery from an explicit browser uninstall is different:
         # remove our registry key, WAIT for Yandex's live watcher to remove the old
         # profile/killbit, then register again. This is still no-restart and browser-owned.
-        $sameRegistration = (
-            $null -ne $oldYandex -and
-            [string]$oldYandex.Path -ceq $installedCrxPath -and
-            [string]$oldYandex.Version -ceq $version
-        )
-        $needsLiveReset = (
-            $browserRunning -and
-            (
-                $blockedBefore.Count -gt 0 -or
-                ($null -ne $oldYandex -and $activeProfilesBefore.Count -eq 0) -or
-                $sameRegistration
-            )
-        )
+        $needsLiveReset = Test-ReleaseYandexLiveResetRequired -BrowserRunning $browserRunning -BlockedProfileCount $blockedBefore.Count -ActiveProfileCount $activeProfilesBefore.Count -HasOldRegistration ($null -ne $oldYandex)
 
         if ($needsLiveReset) {
             $liveResetPerformed = $true
