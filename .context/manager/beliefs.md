@@ -88,11 +88,11 @@ Interactive uninstall asks whether to remove `%LOCALAPPDATA%\ExtensionInstaller`
 
 ## B13 — current verified preview
 
-The current verified clean installer preview is `4.0.0-preview.26`, tag `installer-preview-26`, SHA-256 `5eaf625998a2640d18b0f108e51151f58c6c1d8a9846cbb58947716a8328cfdf`.
+The current verified clean installer preview is `4.0.0-preview.31`, tag `installer-preview-31`, SHA-256 `7a77f01e7c1484f9794737a67cf77d23f75f688f0dd831c8b408fb0d0e802c04`.
 
-It supersedes preview.24 as the owner-test candidate because it keeps the no-restart activation fallback and fixes the post-uninstall false-foreign state through durable ownership evidence plus a separate browser-only classification.
+It supersedes preview.26 because it restores the canonical v3.0.2 non-destructive registry registration semantics while retaining preview.26 ownership/recovery behavior and the browser-owned no-restart fallback.
 
-- source: owner runtime evidence + GitHub Release + successful Windows validation/build runs `36943693207` and `36943747512`
+- source: owner runtime evidence + verified v3 source + GitHub Release + successful Windows validation/build runs `36945415272` and `36945552459`
 - authority: owner-runtime-evidence + verified-ci + verified-repository
 
 ## B14 — current release gate
@@ -118,12 +118,14 @@ The prior ExtensionInstaller stored registered CRX files under `%LOCALAPPDATA%\U
 - source: verified v3 source + current migration implementation
 - authority: verified-repository
 
-## B17 — hot external registration is required
+## B17 — v3.0.2 in-place registration is canonical
 
-The owner requires ExtensionInstaller install/reinstall to work without restarting Yandex Browser, matching the practical behavior of the earlier installer. Chromium/Yandex watches the external-extension registry branch while running. For an ExtensionInstaller-owned existing registration, preview.22 intentionally removes the child key, waits briefly, then recreates it with the verified CRX path/version so the live watcher observes a fresh registration. While the browser is running, ExtensionInstaller does not edit its Preferences file directly.
+The canonical working ExtensionInstaller v3.0.2 source does not delete/recreate an existing Yandex external-extension registry child key during install or update. It executes `New-Item -Force` for the same key and overwrites only `path` and `version`. Deleting that key as an install-time “pulse” was introduced later in v4 and is not part of the proven v3 behavior.
 
-- source: owner directive + Chromium registry-loader behavior + verified implementation/CI
-- authority: owner-directive + verified-repository + verified-ci
+The v3 CRX3 signing algorithm, manifest public-key identity and current GitHub-signed Network Recorder package are compatible; the material behavioral difference was registry handling. v3 also contains a `user32.dll` bridge to foreground the already-running Yandex Browser.
+
+- source: verified v3.0.2 source + owner runtime evidence + preview.31 implementation/CI
+- authority: verified-repository + owner-runtime-evidence + verified-ci
 
 ## B18 — user-removed external extensions need browser-owned reactivation
 
@@ -140,3 +142,12 @@ Current rule: a trusted catalog Extension ID found only in browser profile state
 
 - source: owner runtime observation + preview.26 implementation/CI
 - authority: owner-runtime-evidence + verified-repository + verified-ci
+
+## B20 — installer status is not proof of live browser presence
+
+Owner testing of preview.26 showed “Установлено” in ExtensionInstaller while Network Recorder was absent from Yandex Browser's extensions UI. Therefore browser-profile `extensions.settings` residue cannot be treated as sufficient evidence of a live loaded extension during a running-browser recovery/reinstall.
+
+For recovery or same-value reinstall, preview.31 forces the browser-owned confirmation path instead of claiming success solely from profile-state presence.
+
+- source: owner runtime observation + preview.31 implementation
+- authority: owner-runtime-evidence + verified-repository
