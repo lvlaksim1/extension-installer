@@ -34,7 +34,7 @@ Network Recorder v1.6.0 uses Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`. Gi
 
 ## SM-005 — current product/release gate
 
-Preview.11 exposed a real-browser migration/state-detection defect after the owner removed the legacy-installed Network Recorder through Yandex Browser. Preview `4.0.0-preview.33` supersedes it as the current test candidate and passed Windows validation/build runs `36946218482` and `36946267122`. Preview.33 keeps the old v3.0.2 non-destructive registry path for normal install/update, while blocked or same-value reinstall uses a browser-acknowledged remove/wait/re-register recovery handshake. Chromium state value 2 is treated as `EXTERNAL_EXTENSION_UNINSTALLED`, not installed.
+Preview.11 exposed a real-browser migration/state-detection defect after the owner removed the legacy-installed Network Recorder through Yandex Browser. Preview `4.0.0-preview.35` supersedes it as the current test candidate and passed Windows validation/build runs `36947823138` and `36947870281`. Preview.35 keeps the old v3.0.2 non-destructive registry path for normal/active same-version reinstall, while browser-acknowledged reset is reserved for genuine blocked or missing-active-profile recovery. Chromium state value 2 remains treated as `EXTERNAL_EXTENSION_UNINSTALLED`, not installed.
 
 The remaining gate is owner-side verification of the corrected reinstall/migration path, followed by a real later-version extension update.
 
@@ -100,4 +100,20 @@ For recovery from explicit external uninstall or a same-value reinstall, wait on
 
 - source: Chromium external registry loader behavior + owner runtime observation + preview.33 implementation/CI
 - authority: upstream-source + owner-runtime-evidence + verified-ci
+- status: active
+
+## SM-012 — do not conflate reinstall with recovery
+
+A reinstall of the same CRX while the extension is already active is a normal registration operation, not a recovery operation. The presence of active browser profiles and zero blockers is positive evidence against destructive reset. Recovery reset should be gated by an actual external-uninstall blocker or absence of any active browser profile for an owned registration.
+
+- source: owner runtime observation + preview.35 validation
+- authority: owner-runtime-evidence + verified-ci
+- status: active
+
+## SM-013 — foreground ownership is part of installer UX
+
+If the installer temporarily interacts with or activates the browser, control must return to ExtensionInstaller before completion feedback. Result dialogs should use the main form as their owner; otherwise Windows may place both the app and notification behind the browser.
+
+- source: owner runtime observation + preview.35 implementation
+- authority: owner-runtime-evidence + verified-repository
 - status: active
