@@ -597,7 +597,52 @@ function Set-ReleaseYandexRegistration {
 
     if (-not (Test-ReleaseExtensionId $ExtensionId)) { throw "Некорректный Extension ID." }
     if (-not (Test-Path -LiteralPath $CrxPath -PathType Leaf)) { throw "CRX для регистрации не найден." }
-    if ($Version -notmatch '^\d+(\.\d+){0,3}
+    if ($Version -notmatch '^\d+(\.\d+){0,3}$') { throw "Некорректная версия для регистрации." }
+
+    if (-not (Test-Path -LiteralPath $BaseKey)) {
+        New-Item -Path $BaseKey -Force | Out-Null
+    }
+
+    $key = Join-Path $BaseKey $ExtensionId
+    $hadRegistration = Test-Path -LiteralPath $key
+    $oldPath = ""
+    $oldVersion = ""
+    if ($hadRegistration) {
+        try {
+            $old = Get-ItemProperty -LiteralPath $key -ErrorAction Stop
+            $oldPath = [string]$old.path
+            $oldVersion = [string]$old.version
+        }
+        catch { }
+    }
+
+    $browserRunning = if ($null -ne $BrowserRunningOverride) {
+        [bool]$BrowserRunningOverride
+    }
+    else {
+        Test-ReleaseYandexBrowserRunning
+    }
+
+    # Exact ExtensionInstaller v3.0.2 semantics: never delete an existing
+    # external-extension registry key during install/update. Update path/version
+    # in place so a running Chromium/Yandex instance never observes an uninstall.
+    New-Item -Path $key -Force | Out-Null
+    New-ItemProperty -LiteralPath $key -Name "path" -PropertyType String -Value $CrxPath -Force | Out-Null
+    New-ItemProperty -LiteralPath $key -Name "version" -PropertyType String -Value $Version -Force | Out-Null
+
+    $value = Get-ItemProperty -LiteralPath $key -ErrorAction Stop
+    if ([string]$value.path -cne $CrxPath -or [string]$value.version -cne $Version) {
+        throw "Проверка записи Яндекс.Браузера после регистрации не пройдена."
+    }
+
+    return [pscustomobject]@{
+        Key = $key
+        HadRegistration = [bool]$hadRegistration
+        BrowserRunning = [bool]$browserRunning
+        InPlace = $true
+        ValuesChanged = [bool]((-not $hadRegistration) -or $oldPath -cne $CrxPath -or $oldVersion -cne $Version)
+    }
+}
 
 function Test-ReleaseLegacyYandexRegistration {
     param(
