@@ -365,7 +365,8 @@ function Install-SelectedExtension {
         $wasRemovedByUser = [bool](Get-ReleaseProperty $before "RemovedByUser" $false)
         $wasRemovedByInstaller = [bool](Get-ReleaseProperty $before "RemovedByInstaller" $false)
         $wasBrowserOnly = [bool](Get-ReleaseProperty $before "BrowserOnly" $false)
-        Write-AppLog ("Установка подготовлена: id=" + $result.ExtensionId + "; version=" + $result.Version + "; browser_running=" + $browserRunning + "; removed_by_user=" + $wasRemovedByUser + "; removed_by_installer=" + $wasRemovedByInstaller + "; browser_only=" + $wasBrowserOnly + "; registry_in_place=" + [bool](Get-ReleaseProperty $result "RegistrationInPlace" $false) + "; registry_values_changed=" + [bool](Get-ReleaseProperty $result "RegistrationValuesChanged" $false))
+        $registrationValuesChanged = [bool](Get-ReleaseProperty $result "RegistrationValuesChanged" $false)
+        Write-AppLog ("Установка подготовлена: id=" + $result.ExtensionId + "; version=" + $result.Version + "; browser_running=" + $browserRunning + "; removed_by_user=" + $wasRemovedByUser + "; removed_by_installer=" + $wasRemovedByInstaller + "; browser_only=" + $wasBrowserOnly + "; registry_in_place=" + [bool](Get-ReleaseProperty $result "RegistrationInPlace" $false) + "; registry_values_changed=" + $registrationValuesChanged)
 
         $message = ""
         if ($browserRunning) {
@@ -376,7 +377,7 @@ function Install-SelectedExtension {
             # extensions.settings entry even when the extension is not visible/active.
             # Force the browser-owned confirmation path for these recovery cases instead
             # of trusting profile presence as proof that the extension actually loaded.
-            if ($wasRemovedByUser -or $wasRemovedByInstaller -or $wasBrowserOnly -or -not $after.BrowserInstalled) {
+            if ($wasRemovedByUser -or $wasRemovedByInstaller -or $wasBrowserOnly -or -not $registrationValuesChanged -or -not $after.BrowserInstalled) {
                 $tuneOpened = Open-ReleaseYandexTunePage
                 $crxShown = Show-ReleaseCrxInExplorer ([string]$result.CrxPath)
                 Write-AppLog ("No-restart activation UI: tune_opened=" + $tuneOpened + "; crx_selected=" + $crxShown)
@@ -392,8 +393,12 @@ function Install-SelectedExtension {
                 )
             }
             else {
+                $activated = Activate-ReleaseYandexBrowser
+                Write-AppLog ("v3-style browser activation: activated=" + $activated)
                 $message = (
-                    $name + " " + $result.Version + " установлен в уже работающий Яндекс.Браузер без перезапуска."
+                    $name + " " + $result.Version + " зарегистрирован по рабочей схеме ExtensionInstaller v3.0.2." +
+                    [Environment]::NewLine + [Environment]::NewLine +
+                    "Яндекс.Браузер не перезапускался. После закрытия этого сообщения его окно будет активировано, чтобы не скрывать собственное подтверждение браузера."
                 )
             }
         }
@@ -411,6 +416,10 @@ function Install-SelectedExtension {
             [System.Windows.Forms.MessageBoxButtons]::OK,
             [System.Windows.Forms.MessageBoxIcon]::Information
         ) | Out-Null
+        if ($browserRunning -and -not $wasRemovedByUser -and -not $wasRemovedByInstaller -and -not $wasBrowserOnly -and $registrationValuesChanged) {
+            $activatedAfterDialog = Activate-ReleaseYandexBrowser
+            Write-AppLog ("Yandex foreground after install dialog: activated=" + $activatedAfterDialog)
+        }
     }
     catch {
         Write-AppLog $_.Exception.Message "ERROR"
