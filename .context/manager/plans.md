@@ -1,10 +1,10 @@
 # Manager plans
 
-1. Owner installs preview `4.0.0-preview.35` over preview.33 with Yandex Browser left open.
-2. Click `Переустановить` while Network Recorder is already installed and visible.
-3. Verify no 15-second live-reset timeout occurs; active same-version reinstall must remain on the v3.0.2 in-place registration path.
-4. Verify ExtensionInstaller returns to foreground and the success dialog appears above the browser as an owned modal window.
-5. Verify Network Recorder remains visible/operational with Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`.
-6. Run one final no-restart install -> uninstall -> install/reinstall cycle.
-7. If it passes, promote Network Recorder v1.6.0 to stable and test a later real update.
-8. Stable ExtensionInstaller publication remains gated on owner approval.
+1. Owner uses the verified ExtensionInstaller preview `4.0.0-preview.35`, already confirmed working, to update Network Recorder to `1.7.0` from the prerelease channel.
+2. Verify the update occurs in the running Yandex Browser with the same Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`.
+3. Verify v1.7.0 settings defaults: API bodies ON; textual page resources ON; all resource bodies OFF; files/blob bytes OFF; deep diagnostics OFF; Chromium Tracing OFF.
+4. Repeat the representative ~10-second recording that previously produced >100 MB.
+5. Compare the resulting ZIP size and inspect `session-manifest.json.archiveSizeBreakdown`.
+6. Verify the lighter archive still contains the research evidence the owner actually needs.
+7. If a remaining category dominates size, tune that category specifically rather than weakening capture globally.
+8. Stable Network Recorder / ExtensionInstaller publication remains gated on owner approval.
