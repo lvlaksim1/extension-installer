@@ -88,11 +88,11 @@ Interactive uninstall asks whether to remove `%LOCALAPPDATA%\ExtensionInstaller`
 
 ## B13 — current verified preview
 
-The current verified clean installer preview is `4.0.0-preview.24`, tag `installer-preview-24`, SHA-256 `36f28f2e2bb814b0c7cf77c45b73f0f74cb3dda105bb60a04fb0f2571652e140`.
+The current verified clean installer preview is `4.0.0-preview.26`, tag `installer-preview-26`, SHA-256 `5eaf625998a2640d18b0f108e51151f58c6c1d8a9846cbb58947716a8328cfdf`.
 
-It supersedes preview.22 as the owner-test candidate because it keeps no-restart hot registration and adds a browser-owned `browser://tune` + selected verified CRX fallback for user-removed/blocklisted or otherwise not-live-loaded external extensions.
+It supersedes preview.24 as the owner-test candidate because it keeps the no-restart activation fallback and fixes the post-uninstall false-foreign state through durable ownership evidence plus a separate browser-only classification.
 
-- source: owner runtime evidence + GitHub Release + successful Windows validation/build runs `36942756644` and `36942832970`
+- source: owner runtime evidence + GitHub Release + successful Windows validation/build runs `36943693207` and `36943747512`
 - authority: owner-runtime-evidence + verified-ci + verified-repository
 
 ## B14 — current release gate
@@ -131,3 +131,12 @@ A user removal performed in Yandex Browser is stronger than absence of an extern
 
 - source: owner directive + owner runtime observation + browser external-extension semantics + verified implementation/CI
 - authority: owner-directive + owner-runtime-evidence + verified-repository + verified-ci
+
+## B19 — profile-only same-ID state is not a foreign external registration
+
+Owner testing of preview.24 showed that ExtensionInstaller-driven uninstall can remove its registry/state immediately while a running Yandex Browser still retains the extension entry in profile state. Classifying that exact state as “foreign” destroys the reinstall path.
+
+Current rule: a trusted catalog Extension ID found only in browser profile state, with no external registry registration and no active installer state, is modeled as `BrowserOnly`, not as a foreign external registration. Install/connect remains allowed. Future ExtensionInstaller-driven uninstalls persist `ownership.json` before deleting active CRX/state so the UI can explicitly report “removed by ExtensionInstaller” during browser-state lag.
+
+- source: owner runtime observation + preview.26 implementation/CI
+- authority: owner-runtime-evidence + verified-repository + verified-ci
