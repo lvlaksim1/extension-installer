@@ -19,14 +19,14 @@
 ## EI-PM-004 — integrate Network Recorder
 - status: active; corrected real-browser migration/reinstall retest pending
 - source: owner directive
-- result so far: Network Recorder v1.6.0 source is in its own public repository, signing secret is GitHub-hosted, signed prerelease preserves the original Extension ID, catalog entry is active, and ExtensionInstaller resolves/verifies it successfully. Owner-side preview.11 testing exposed a legacy-registration/manual-browser-removal defect; preview.24 contains the current CI-verified correction, including authoritative profile-state detection, no-restart live registry re-registration, and a browser-owned `browser://tune` fallback for prior user-removal/non-pickup cases.
-- remaining: owner-side preview.24 no-restart Yandex Browser reinstall/function verification, then a real later-version update test.
+- result so far: Network Recorder v1.6.0 source is in its own public repository, signing secret is GitHub-hosted, signed prerelease preserves the original Extension ID, catalog entry is active, and ExtensionInstaller resolves/verifies it successfully. Owner-side preview.11 testing exposed a legacy-registration/manual-browser-removal defect; preview.26 contains the current CI-verified correction, including no-restart activation plus durable post-uninstall ownership and browser-only recovery instead of false foreign classification.
+- remaining: owner-side preview.26 install -> uninstall -> reinstall verification in one running Yandex Browser session, then a real later-version update test.
 
 ## EI-PM-005 — make ExtensionInstaller installable/updatable
 - status: completed
 - source: owner directive
 - result: single Inno Setup EXE, fixed AppId, per-user installation, in-place update, obsolete installed CMD cleanup, optional removal of application data on uninstall.
-- current verified setup: `4.0.0-preview.24`; build run `36942832970`.
+- current verified setup: `4.0.0-preview.26`; build run `36943747512`.
 
 ## EI-PM-006 — coordinate extension ecosystem
 - status: active
