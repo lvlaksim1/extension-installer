@@ -9,3 +9,4 @@
 7. After the real no-restart install passes, promote Network Recorder v1.6.0 to a stable GitHub Release and switch its catalog channel from `prerelease` to `stable`.
 8. Produce a later Network Recorder release and verify a real no-restart update through ExtensionInstaller.
 9. Only after install/update verification and explicit owner approval designate a stable ExtensionInstaller release.
+# Next actions
