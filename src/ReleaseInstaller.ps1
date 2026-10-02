@@ -143,7 +143,16 @@ function Resolve-LatestSignedExtensionRelease($CatalogEntry, [string]$WorkingRoo
         if ([bool](Get-ReleaseProperty $release "prerelease" $true)) { throw "Stable channel получил prerelease." }
     }
     elseif ($channel -ceq "prerelease") {
-        $releases = @(Invoke-GitHubReleaseJson ("https://api.github.com/repos/" + $repo + "/releases?per_page=20"))
+        # Windows PowerShell 5.1 can return a top-level JSON array from
+        # Invoke-RestMethod as one Object[] pipeline item. Re-enumerate the
+        # assigned response explicitly before filtering; otherwise member
+        # enumeration can merge assets from several releases into one object.
+        $releaseResponse = Invoke-GitHubReleaseJson ("https://api.github.com/repos/" + $repo + "/releases?per_page=20")
+        $releases = @()
+        foreach ($candidate in $releaseResponse) {
+            $releases += $candidate
+        }
+
         $release = @($releases | Where-Object {
             $_.draft -eq $false -and $_.prerelease -eq $true
         } | Select-Object -First 1)
