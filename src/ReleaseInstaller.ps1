@@ -902,12 +902,35 @@ function Install-ValidatedSignedRelease($ResolvedRelease, [string]$InstallRoot) 
 
     $preferenceBackups = @()
     $browserRunning = Test-ReleaseYandexBrowserRunning
+    $liveResetPerformed = $false
+    $liveResetCleared = $false
+    $liveResetElapsed = 0
     try {
-        # When Yandex is closed we can safely clear a persisted user-uninstall marker
-        # before the next browser start. When it is running, never edit Preferences
-        # behind its back. Registration follows the proven v3.0.2 behavior: update
-        # the owned registry key in place and let the browser own its live profile state.
-        if (-not $browserRunning) {
+        $blockedBefore = @(Get-ReleaseYandexExternalUninstallProfiles $extensionId)
+        $activeProfilesBefore = @(Get-ReleaseYandexProfileInstallations $extensionId | Where-Object { -not [bool]$_.IsExternalUninstalled })
+
+        # Normal install/update keeps the proven v3.0.2 semantics: path/version are
+        # updated in place. Recovery from an explicit browser uninstall is different:
+        # remove our registry key, WAIT for Yandex's live watcher to remove the old
+        # profile/killbit, then register again. This is still no-restart and browser-owned.
+        $needsLiveReset = (
+            $browserRunning -and
+            (
+                $blockedBefore.Count -gt 0 -or
+                ($null -ne $oldYandex -and $activeProfilesBefore.Count -eq 0)
+            )
+        )
+
+        if ($needsLiveReset) {
+            $liveResetPerformed = $true
+            $reset = Reset-ReleaseYandexExternalRegistrationLive -ExtensionId $extensionId -TimeoutMilliseconds 15000
+            $liveResetCleared = [bool]$reset.Cleared
+            $liveResetElapsed = [int]$reset.ElapsedMilliseconds
+            if (-not $liveResetCleared) {
+                throw ("Яндекс.Браузер не подтвердил очистку предыдущего external-состояния за 15 секунд. Осталось профилей: " + $reset.RemainingProfileEntries + "; блокировок: " + $reset.RemainingBlockedProfiles + ".")
+            }
+        }
+        elseif (-not $browserRunning) {
             $preferenceBackups = @(Remove-ReleaseYandexExternalUninstallMarker $extensionId)
         }
 
@@ -967,6 +990,14 @@ function Install-ValidatedSignedRelease($ResolvedRelease, [string]$InstallRoot) 
         throw ("Установка release CRX не выполнена. Rollback завершён. Причина: " + $reason)
     }
 
+    $browserObservedInstalled = $false
+    $browserObserveElapsed = 0
+    if ($browserRunning) {
+        $observe = Wait-ReleaseYandexProfileInstalled -ExtensionId $extensionId -Version $version -TimeoutMilliseconds 10000
+        $browserObservedInstalled = [bool]$observe.Installed
+        $browserObserveElapsed = [int]$observe.ElapsedMilliseconds
+    }
+
     return [pscustomobject]@{
         Version = $version
         ExtensionId = $extensionId
@@ -976,6 +1007,11 @@ function Install-ValidatedSignedRelease($ResolvedRelease, [string]$InstallRoot) 
         BrowserWasRunning = [bool]$browserRunning
         RegistrationInPlace = [bool](Get-ReleaseProperty $registration "InPlace" $false)
         RegistrationValuesChanged = [bool](Get-ReleaseProperty $registration "ValuesChanged" $false)
+        LiveResetPerformed = [bool]$liveResetPerformed
+        LiveResetCleared = [bool]$liveResetCleared
+        LiveResetElapsedMilliseconds = [int]$liveResetElapsed
+        BrowserObservedInstalled = [bool]$browserObservedInstalled
+        BrowserObserveElapsedMilliseconds = [int]$browserObserveElapsed
     }
 }
 
