@@ -116,6 +116,20 @@ jobs:
           Remove-Item -LiteralPath $registryTestBase -Recurse -Force -ErrorAction SilentlyContinue
           Remove-Item -LiteralPath $registryTestCrx -Force -ErrorAction SilentlyContinue
 
+          if (Test-ReleaseYandexLiveResetRequired -BrowserRunning $true -BlockedProfileCount 0 -ActiveProfileCount 3 -HasOldRegistration $true) {
+            throw 'Active same-version reinstall incorrectly requested a live reset.'
+          }
+          if (-not (Test-ReleaseYandexLiveResetRequired -BrowserRunning $true -BlockedProfileCount 1 -ActiveProfileCount 3 -HasOldRegistration $true)) {
+            throw 'Blocked reinstall did not request a live reset.'
+          }
+          if (-not (Test-ReleaseYandexLiveResetRequired -BrowserRunning $true -BlockedProfileCount 0 -ActiveProfileCount 0 -HasOldRegistration $true)) {
+            throw 'Missing active browser profile did not request recovery reset.'
+          }
+          if (Test-ReleaseYandexLiveResetRequired -BrowserRunning $false -BlockedProfileCount 1 -ActiveProfileCount 0 -HasOldRegistration $true) {
+            throw 'Closed browser incorrectly requested a live reset.'
+          }
+
+
           $ownershipRoot = Join-Path $env:RUNNER_TEMP ('ownership-' + [Guid]::NewGuid().ToString('N'))
           $ownershipPath = Join-Path $ownershipRoot 'ownership.json'
           $ownershipState = [pscustomobject]@{
