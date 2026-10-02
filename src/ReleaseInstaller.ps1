@@ -257,6 +257,14 @@ function Get-ReleaseYandexProfileInstallations {
             $version = [string](Get-ReleaseProperty $manifest "version" "")
         }
 
+        $stateValue = Get-ReleaseProperty $settingsEntry "state" $null
+        $state = -1
+        if ($null -ne $stateValue) {
+            try { $state = [int]$stateValue } catch { $state = -1 }
+        }
+        # Chromium persists 2 as EXTERNAL_EXTENSION_UNINSTALLED.
+        $isExternalUninstalled = ($state -eq 2)
+
         $extensionRoot = Join-Path (Join-Path $profile.FullName "Extensions") $ExtensionId
         $path = ""
         if (Test-Path -LiteralPath $extensionRoot -PathType Container) {
@@ -279,6 +287,8 @@ function Get-ReleaseYandexProfileInstallations {
             Version = $version
             Path = $path
             PreferencesPath = $settingsSource
+            State = $state
+            IsExternalUninstalled = [bool]$isExternalUninstalled
         }
     }
     return @($result)
@@ -305,10 +315,24 @@ function Get-ReleaseYandexExternalUninstallProfiles {
                 $preferences = [System.IO.File]::ReadAllText($preferencesPath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json -ErrorAction Stop
                 $extensions = Get-ReleaseProperty $preferences "extensions" $null
                 $externalUninstalls = @(Get-ReleaseProperty $extensions "external_uninstalls" $null)
-                if (@($externalUninstalls | Where-Object { [string]$_ -ceq $ExtensionId }).Count -gt 0) {
+                $listed = (@($externalUninstalls | Where-Object { [string]$_ -ceq $ExtensionId }).Count -gt 0)
+
+                $settings = Get-ReleaseProperty $extensions "settings" $null
+                $candidate = Get-ReleaseProperty $settings $ExtensionId $null
+                $stateIsExternalUninstalled = $false
+                if ($null -ne $candidate) {
+                    $candidateState = Get-ReleaseProperty $candidate "state" $null
+                    if ($null -ne $candidateState) {
+                        try { $stateIsExternalUninstalled = ([int]$candidateState -eq 2) } catch { }
+                    }
+                }
+
+                if ($listed -or $stateIsExternalUninstalled) {
                     $result += [pscustomobject]@{
                         Profile = [string]$profile.Name
                         PreferencesPath = [string]$preferencesPath
+                        Listed = [bool]$listed
+                        StateExternalUninstalled = [bool]$stateIsExternalUninstalled
                     }
                     break
                 }
@@ -570,6 +594,97 @@ function Remove-ReleaseYandexExternalUninstallMarker {
     }
 
     return @($backups)
+}
+
+
+function Wait-ReleaseYandexExternalStateCleared {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionId,
+        [int]$TimeoutMilliseconds = 15000,
+        [int]$PollMilliseconds = 250
+    )
+
+    if ($TimeoutMilliseconds -lt 500 -or $TimeoutMilliseconds -gt 60000) { throw "Некорректный timeout ожидания браузера." }
+    if ($PollMilliseconds -lt 50 -or $PollMilliseconds -gt 2000) { throw "Некорректный интервал ожидания браузера." }
+
+    $watch = [System.Diagnostics.Stopwatch]::StartNew()
+    do {
+        $blocked = @(Get-ReleaseYandexExternalUninstallProfiles $ExtensionId)
+        $profiles = @(Get-ReleaseYandexProfileInstallations $ExtensionId)
+        if ($blocked.Count -eq 0 -and $profiles.Count -eq 0) {
+            $watch.Stop()
+            return [pscustomobject]@{
+                Cleared = $true
+                ElapsedMilliseconds = [int]$watch.ElapsedMilliseconds
+                RemainingBlockedProfiles = 0
+                RemainingProfileEntries = 0
+            }
+        }
+        Start-Sleep -Milliseconds $PollMilliseconds
+    }
+    while ($watch.ElapsedMilliseconds -lt $TimeoutMilliseconds)
+
+    $watch.Stop()
+    $blocked = @(Get-ReleaseYandexExternalUninstallProfiles $ExtensionId)
+    $profiles = @(Get-ReleaseYandexProfileInstallations $ExtensionId)
+    return [pscustomobject]@{
+        Cleared = $false
+        ElapsedMilliseconds = [int]$watch.ElapsedMilliseconds
+        RemainingBlockedProfiles = $blocked.Count
+        RemainingProfileEntries = $profiles.Count
+    }
+}
+
+function Wait-ReleaseYandexProfileInstalled {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionId,
+        [Parameter(Mandatory = $true)]
+        [string]$Version,
+        [int]$TimeoutMilliseconds = 10000,
+        [int]$PollMilliseconds = 250
+    )
+
+    $watch = [System.Diagnostics.Stopwatch]::StartNew()
+    do {
+        $profiles = @(Get-ReleaseYandexProfileInstallations $ExtensionId | Where-Object {
+            -not [bool]$_.IsExternalUninstalled -and
+            ([string]::IsNullOrWhiteSpace([string]$_.Version) -or [string]$_.Version -ceq $Version)
+        })
+        if ($profiles.Count -gt 0) {
+            $watch.Stop()
+            return [pscustomobject]@{
+                Installed = $true
+                ElapsedMilliseconds = [int]$watch.ElapsedMilliseconds
+                ProfileCount = $profiles.Count
+            }
+        }
+        Start-Sleep -Milliseconds $PollMilliseconds
+    }
+    while ($watch.ElapsedMilliseconds -lt $TimeoutMilliseconds)
+
+    $watch.Stop()
+    return [pscustomobject]@{
+        Installed = $false
+        ElapsedMilliseconds = [int]$watch.ElapsedMilliseconds
+        ProfileCount = 0
+    }
+}
+
+function Reset-ReleaseYandexExternalRegistrationLive {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ExtensionId,
+        [int]$TimeoutMilliseconds = 15000
+    )
+
+    $key = Join-Path "HKCU:\Software\Yandex\YandexBrowser\Extensions" $ExtensionId
+    if (Test-Path -LiteralPath $key) {
+        Remove-Item -LiteralPath $key -Recurse -Force -ErrorAction Stop
+    }
+
+    return (Wait-ReleaseYandexExternalStateCleared -ExtensionId $ExtensionId -TimeoutMilliseconds $TimeoutMilliseconds)
 }
 
 function Set-ReleaseYandexRegistration {
