@@ -1,6 +1,6 @@
 # Latest handoff
 
-Updated: 2026-10-02 04:32 MSK
+Updated: 2026-10-02 04:42 MSK
 
 ## Manager
 
@@ -42,13 +42,14 @@ Root cause and correction:
 
 ## Current installer preview
 
-- version: `4.0.0-preview.35`
-- tag: `installer-preview-35`
-- asset: `ExtensionInstaller_Setup_v4.0.0-preview.35.exe`
-- SHA-256: `a1c36d77dd3f02d378cf4930a011a2b36ba3782574d3d0c382755845488408cd`
-- validation run: `36947823138` — success
-- build run: `36947870281` — success
+- version: `4.0.0-preview.37`
+- tag: `installer-preview-37`
+- asset: `ExtensionInstaller_Setup_v4.0.0-preview.37.exe`
+- SHA-256: `55094465f755ec1e7b7e9ad41b5a66a5ce8c6449de274425c6e6339e323eacfe`
+- release-engine validation run: `36951995805` — success
+- build run: `36952046332` — success
 - retained Actions artifacts: none
+- preview.37 fixes Windows PowerShell 5.1 top-level GitHub releases-array enumeration. With multiple prereleases present, preview.35 could merge assets from several releases and falsely report duplicate `extension-release.json` assets. preview.37 scopes assets to the selected latest prerelease only.
 
 ## Network Recorder
 
@@ -67,6 +68,6 @@ Root cause and correction:
 
 ## Resume point
 
-Owner already confirmed ExtensionInstaller preview.35 works. Resume by updating Network Recorder to 1.7.0 through ExtensionInstaller, recording the same representative page for ~10 seconds with default lightweight options, and comparing ZIP size / `archiveSizeBreakdown`.
+Owner installs preview.37 over preview.35, presses `Проверить`, verifies Network Recorder 1.7.0 resolves without the duplicate-asset error, updates it, then repeats the ~10-second size test with default lightweight options.
 
 Stable publication remains gated on real install/update verification and explicit owner approval.
