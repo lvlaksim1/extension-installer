@@ -1,6 +1,6 @@
 # Current state
 
-Updated: 2026-10-02 03:49 MSK
+Updated: 2026-10-02 04:32 MSK
 
 - Repository: `lvlaksim1/extension-installer`.
 - Visibility: public.
@@ -22,12 +22,17 @@ Updated: 2026-10-02 03:49 MSK
 - Interactive uninstall asks whether to remove `%LOCALAPPDATA%\ExtensionInstaller`; No preserves data, Yes deletes it.
 - The catalog currently contains Network Recorder only.
 - Network Recorder repository: `lvlaksim1/network-recorder`; it has no separate Project Manager by owner decision.
-- Network Recorder source baseline: v1.6.0.
+- Network Recorder historical baseline: v1.6.0.
+- Owner confirmed ExtensionInstaller preview.35 fully works for install, uninstall, reinstall and foreground result dialogs in the running Yandex Browser.
 - Pinned Extension ID: `paolfcaakecapidipfcfbbhgkpcmgcip`.
 - Catalog channel: `prerelease`.
-- Verified Network Recorder prerelease: `network-recorder-v1.6.0-preview-1`.
-- Verified CRX SHA-256: `3516149ea638f6ff10626c1ae974c92627e220c1e86b5c5195abdea4700c26cf`.
-- Network Recorder release assets are `Network_Recorder_v1.6.0.crx` and `extension-release.json`; users do not place them manually.
+- Current Network Recorder development prerelease: `network-recorder-v1.7.0-preview-7`.
+- Network Recorder v1.7.0 CRX SHA-256: `3db553fc93c12ba4fb6a5e2ce415f7c69e352d502b7b8fed5ed02fc952333bef`.
+- Signed build run `36951295240` passed strict JS syntax validation, CRX3 signing, Extension ID verification and release publication.
+- v1.7.0 preserves Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`.
+- v1.7.0 changes recording defaults to size-conscious selective capture: API bodies and textual page resources on by default; binary resource bodies, file/blob bytes, deep diagnostics and Chromium Tracing off by default.
+- v1.7.0 ZIP exporter uses DEFLATE where beneficial with STORE fallback/already-compressed binary handling, removes duplicate JS body storage, reduces duplicated HAR/WebSocket payloads, and writes `archiveSizeBreakdown` into `session-manifest.json`.
+- Network Recorder release assets are `Network_Recorder_v1.7.0.crx` and `extension-release.json`; users do not place them manually.
 - Owner-side test of preview 4.0.0-preview.11 confirmed the clean UI sees the GitHub release, but exposed a migration/state-detection defect after the previously installed Network Recorder was removed through Yandex Browser.
 - The old v3.x installer registered CRX files from `%LOCALAPPDATA%\UniversalExtensionBuilder\projects\<extension-id>\crx`; preview.11 treated that exact old ExtensionInstaller-owned path as foreign.
 - Browser-UI removal can leave the external registry registration and record the Extension ID in the Chromium/Yandex `extensions.external_uninstalls` preference, so registry presence alone is not proof that the extension remains installed.
@@ -52,4 +57,4 @@ Updated: 2026-10-02 03:49 MSK
 - Retained GitHub Actions artifacts for run `36947870281`: none.
 - Stable ExtensionInstaller publication has not been designated.
 - Preview.35 supersedes preview.33 because it keeps the browser-acknowledged recovery only for genuinely blocked/missing-active-profile states, while normal active same-version reinstall stays on the v3.0.2 in-place path; result dialogs are now owned by the ExtensionInstaller window and the app is restored to foreground.
-- Next external gate: owner installs preview 4.0.0-preview.35 over preview.33 with Yandex Browser left open, verifies `Переустановить` succeeds without the 15-second reset error, and confirms the ExtensionInstaller window plus success dialog remain above the browser.
+- Next external gate: owner uses working ExtensionInstaller preview.35 to update Network Recorder from 1.6.0 to 1.7.0, records the same page for about 10 seconds with the new default lightweight settings, and compares ZIP size against the previous >100 MB result. Inspect `session-manifest.json -> archiveSizeBreakdown` if still unexpectedly large.
