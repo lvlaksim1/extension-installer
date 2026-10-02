@@ -88,11 +88,11 @@ Interactive uninstall asks whether to remove `%LOCALAPPDATA%\ExtensionInstaller`
 
 ## B13 — current verified preview
 
-The current verified clean installer preview is `4.0.0-preview.33`, tag `installer-preview-33`, SHA-256 `f8d4275762e3ff264f5e20e39b34dc47f346de62581374a068ace7f2fa0d5a46`.
+The current verified clean installer preview is `4.0.0-preview.35`, tag `installer-preview-35`, SHA-256 `a1c36d77dd3f02d378cf4930a011a2b36ba3782574d3d0c382755845488408cd`.
 
-It supersedes preview.31 because it preserves canonical v3.0.2 registration for normal changes and adds an acknowledged live reset for blocked or same-value reinstall, plus explicit Chromium state=2 detection.
+It supersedes preview.33 because active same-version reinstall no longer enters live reset when active browser profiles exist, while genuine blocked/missing-active-profile recovery still can. It also restores ExtensionInstaller to foreground and shows the result dialog as an owned modal window.
 
-- source: owner runtime evidence + verified v3 source + GitHub Release + successful Windows validation/build runs `36946218482` and `36946267122`
+- source: owner runtime evidence + verified v3 source + GitHub Release + successful Windows validation/build runs `36947823138` and `36947870281`
 - authority: owner-runtime-evidence + verified-ci + verified-repository
 
 ## B14 — current release gate
@@ -160,3 +160,19 @@ Preview.33 keeps v3.0.2 in-place writes for normal install/update. For blocked o
 
 - source: Chromium source + owner runtime observation + preview.33 implementation/CI
 - authority: upstream-source + owner-runtime-evidence + verified-ci
+
+## B22 — active same-version reinstall is not a recovery reset
+
+Owner testing showed a working installed extension could have three active browser profile entries and zero external-uninstall blockers. A same path/version registration in that state is not evidence of a stuck reinstall and must not trigger the destructive live-reset recovery handshake.
+
+Current rule: live reset is required only when an external-uninstall blocker exists or an owned registration exists with no active browser profile. Active same-version reinstall stays on the v3.0.2 in-place registration path.
+
+- source: owner runtime observation + preview.35 implementation/CI
+- authority: owner-runtime-evidence + verified-repository + verified-ci
+
+## B23 — installer result UI remains foreground-owned
+
+After successful live install, ExtensionInstaller must not intentionally foreground Yandex Browser before showing its own result. The main ExtensionInstaller form is restored/activated, and result dialogs use the form as their WinForms owner so they remain above it.
+
+- source: owner UX directive + preview.35 implementation
+- authority: owner-directive + verified-repository
