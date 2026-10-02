@@ -88,11 +88,11 @@ Interactive uninstall asks whether to remove `%LOCALAPPDATA%\ExtensionInstaller`
 
 ## B13 — current verified preview
 
-The current verified clean installer preview is `4.0.0-preview.31`, tag `installer-preview-31`, SHA-256 `7a77f01e7c1484f9794737a67cf77d23f75f688f0dd831c8b408fb0d0e802c04`.
+The current verified clean installer preview is `4.0.0-preview.33`, tag `installer-preview-33`, SHA-256 `f8d4275762e3ff264f5e20e39b34dc47f346de62581374a068ace7f2fa0d5a46`.
 
-It supersedes preview.26 because it restores the canonical v3.0.2 non-destructive registry registration semantics while retaining preview.26 ownership/recovery behavior and the browser-owned no-restart fallback.
+It supersedes preview.31 because it preserves canonical v3.0.2 registration for normal changes and adds an acknowledged live reset for blocked or same-value reinstall, plus explicit Chromium state=2 detection.
 
-- source: owner runtime evidence + verified v3 source + GitHub Release + successful Windows validation/build runs `36945415272` and `36945552459`
+- source: owner runtime evidence + verified v3 source + GitHub Release + successful Windows validation/build runs `36946218482` and `36946267122`
 - authority: owner-runtime-evidence + verified-ci + verified-repository
 
 ## B14 — current release gate
@@ -151,3 +151,12 @@ For recovery or same-value reinstall, preview.31 forces the browser-owned confir
 
 - source: owner runtime observation + preview.31 implementation
 - authority: owner-runtime-evidence + verified-repository
+
+## B21 — blocked reinstall requires browser acknowledgement, not a fixed delay
+
+Chromium's Windows external registry loader watches the HKCU extensions key live. When an external extension has been explicitly removed, persisted state can represent `EXTERNAL_EXTENSION_UNINSTALLED` (state value 2) and/or `extensions.external_uninstalls`. Rewriting the same registry values does not prove that the browser accepted the extension.
+
+Preview.33 keeps v3.0.2 in-place writes for normal install/update. For blocked or same-value reinstall, it removes only the owned registration, waits for Yandex to clear its old profile/uninstall state, re-registers the verified CRX, and waits for a non-uninstalled profile state before claiming live success.
+
+- source: Chromium source + owner runtime observation + preview.33 implementation/CI
+- authority: upstream-source + owner-runtime-evidence + verified-ci
