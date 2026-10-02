@@ -1,9 +1,7 @@
 # Next actions
 
-1. Owner installs `ExtensionInstaller_Setup_v4.0.0-preview.37.exe` over preview.35; Yandex Browser may remain open.
-2. Press `Проверить`. Expected: latest Network Recorder prerelease resolves as `1.7.0` without the duplicate `extension-release.json` error.
-3. Update Network Recorder from 1.6.0 to 1.7.0.
-4. Verify v1.7.0 lightweight defaults: API bodies ON; textual page resources ON; all resource bodies OFF; files/blob bytes OFF; deep diagnostics OFF; Chromium Tracing OFF.
-5. Repeat the representative ~10-second recording that previously produced >100 MB.
-6. Compare ZIP size and inspect `session-manifest.json.archiveSizeBreakdown` if needed.
-7. Stable publication remains owner-controlled.
+1. Owner installs `ExtensionInstaller_Setup_v4.0.0-preview.39.exe` over preview.37; Yandex Browser may remain open.
+2. With Network Recorder already active, use `Переустановить` once as the closest current normal in-place path. Expected: the operation completes promptly, no new Yandex Browser window or Explorer window opens, and the result is a simple success message without “browser did not confirm” wording.
+3. If the UX is clean, continue the Network Recorder v1.7.0 recording-size verification: default lightweight options, ~10-second representative recording, then compare ZIP size and `session-manifest.json.archiveSizeBreakdown`.
+4. The next real later-version Network Recorder update should use the same non-blocking normal update path; browser-confirmed waiting is reserved only for genuine external-uninstall recovery.
+5. Stable publication remains owner-controlled.
