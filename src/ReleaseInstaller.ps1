@@ -913,11 +913,17 @@ function Install-ValidatedSignedRelease($ResolvedRelease, [string]$InstallRoot) 
         # updated in place. Recovery from an explicit browser uninstall is different:
         # remove our registry key, WAIT for Yandex's live watcher to remove the old
         # profile/killbit, then register again. This is still no-restart and browser-owned.
+        $sameRegistration = (
+            $null -ne $oldYandex -and
+            [string]$oldYandex.Path -ceq $installedCrxPath -and
+            [string]$oldYandex.Version -ceq $version
+        )
         $needsLiveReset = (
             $browserRunning -and
             (
                 $blockedBefore.Count -gt 0 -or
-                ($null -ne $oldYandex -and $activeProfilesBefore.Count -eq 0)
+                ($null -ne $oldYandex -and $activeProfilesBefore.Count -eq 0) -or
+                $sameRegistration
             )
         )
 
