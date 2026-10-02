@@ -60,6 +60,27 @@ jobs:
           $blockedProfiles = @(Get-ReleaseYandexExternalUninstallProfiles $testId $fakeUserData)
           if ($blockedProfiles.Count -ne 1) { throw 'External-uninstall detection failed.' }
 
+          $state2Preferences = Join-Path $fakeDefault 'Secure Preferences'
+          [IO.File]::WriteAllText(
+            $state2Preferences,
+            ('{"extensions":{"settings":{"' + $testId + '":{"state":2,"manifest":{"version":"1.6.0"}}}}}'),
+            (New-Object Text.UTF8Encoding($false))
+          )
+          $state2Profiles = @(Get-ReleaseYandexProfileInstallations $testId $fakeUserData)
+          if ($state2Profiles.Count -ne 1 -or -not [bool]$state2Profiles[0].IsExternalUninstalled -or [int]$state2Profiles[0].State -ne 2) {
+            throw 'EXTERNAL_EXTENSION_UNINSTALLED state detection failed.'
+          }
+          $state2Blocked = @(Get-ReleaseYandexExternalUninstallProfiles $testId $fakeUserData)
+          if ($state2Blocked.Count -ne 1) { throw 'State=2 was not treated as external uninstall.' }
+
+          [IO.File]::WriteAllText(
+            $fakeSecurePreferences,
+            ('{"extensions":{"settings":{"' + $testId + '":{"state":1,"manifest":{"version":"1.6.0"}}}}}'),
+            (New-Object Text.UTF8Encoding($false))
+          )
+
+
+
           $prefBackups = @(Remove-ReleaseYandexExternalUninstallMarker $testId $fakeUserData)
           if ($prefBackups.Count -ne 1) { throw 'External-uninstall marker was not cleared.' }
           $prefsAfter = [IO.File]::ReadAllText($fakePreferences) | ConvertFrom-Json
