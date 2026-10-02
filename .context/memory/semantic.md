@@ -34,7 +34,7 @@ Network Recorder v1.6.0 uses Extension ID `paolfcaakecapidipfcfbbhgkpcmgcip`. Gi
 
 ## SM-005 — current product/release gate
 
-Preview.11 exposed a real-browser migration/state-detection defect after the owner removed the legacy-installed Network Recorder through Yandex Browser. Preview `4.0.0-preview.24` supersedes it as the current test candidate and passed Windows validation/build runs `36942756644` and `36942832970`. Preview.24 derives installed state from browser profile `extensions.settings`, treats stale extension directories as non-authoritative, first uses two-phase registry re-registration for no-restart installation, and falls back to browser-owned `browser://tune` installation with the exact verified CRX selected when the extension was user-removed or is not accepted live.
+Preview.11 exposed a real-browser migration/state-detection defect after the owner removed the legacy-installed Network Recorder through Yandex Browser. Preview `4.0.0-preview.26` supersedes it as the current test candidate and passed Windows validation/build runs `36943693207` and `36943747512`. Preview.26 retains the no-restart install path and additionally preserves durable ownership across ExtensionInstaller-driven uninstall while treating profile-only presence of the trusted Extension ID as browser-only rather than foreign.
 
 The remaining gate is owner-side verification of the corrected reinstall/migration path, followed by a real later-version extension update.
 
@@ -67,5 +67,15 @@ When the user removes an externally registered extension through Yandex Browser,
 The reusable recovery pattern is: keep the browser running, attempt the normal hot registration, then if browser profile state still lacks the extension (or the prior snapshot records user removal), open the browser's extension-management page and surface the already verified CRX for normal confirmation. Do not edit live browser Preferences behind the browser.
 
 - source: owner runtime observation + browser external-extension semantics + preview.24 implementation/CI
+- authority: owner-runtime-evidence + verified-repository + verified-ci
+- status: active
+
+## SM-009 — uninstall must not erase ownership before browser convergence
+
+With a running Chromium/Yandex process, deleting the external registry entry and installer state can complete before the browser removes its profile-side extension record. If installer ownership evidence is deleted at the same time, the next status refresh can falsely reinterpret the residual profile entry as foreign.
+
+Reusable rule: persist a small durable ownership tombstone before destructive uninstall, keep it outside the deleted CRX/state payload, and clear it only after a successful reinstall. Separately, profile-only presence of a catalog-pinned Extension ID is not itself a foreign external registration and must not disable reinstall.
+
+- source: owner runtime observation + preview.26 implementation/CI
 - authority: owner-runtime-evidence + verified-repository + verified-ci
 - status: active
