@@ -1,6 +1,6 @@
 # Current state
 
-Updated: 2026-10-02 04:42 MSK
+Updated: 2026-10-02 04:56 MSK
 
 - Repository: `lvlaksim1/extension-installer`.
 - Visibility: public.
@@ -48,10 +48,10 @@ Updated: 2026-10-02 04:42 MSK
 - Current `main` preserves v3.0.2 in-place registration for normal install/update, but adds a browser-owned recovery handshake for explicit uninstall/same-value reinstall: if Yandex still remembers the extension as externally uninstalled (including persisted state=2), ExtensionInstaller removes its registry key, waits up to 15 seconds for Yandex's live registry watcher to clear the old profile/killbit, and only then re-registers the exact verified CRX. It then waits up to 10 seconds for a non-uninstalled profile state before reporting live success.
 - Owner-side preview.33 test confirmed real install and uninstall now work in the already-running Yandex Browser. Two residual defects remained: successful install brought Yandex to foreground above ExtensionInstaller/dialogs, and `Переустановить` incorrectly forced live reset for an already active same-version install, timing out with `профилей: 3; блокировок: 0`.
 - Preview.35 fixes both: active same-version installs with active browser profiles no longer enter destructive/reset recovery, and ExtensionInstaller restores its own window to foreground before showing an owned modal result dialog.
-- Current verified installer preview: `4.0.0-preview.37`.
-- Release tag: `installer-preview-37`.
-- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.37.exe`.
-- Setup SHA-256: `55094465f755ec1e7b7e9ad41b5a66a5ce8c6449de274425c6e6339e323eacfe`.
+- Current verified installer preview: `4.0.0-preview.39`.
+- Release tag: `installer-preview-39`.
+- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.39.exe`.
+- Setup SHA-256: `09d8188650a617ec2e725ad633a9344269740dcc3641fd2343c5deca25a79115`.
 - Windows validation run `36947823138` passed PowerShell 5.1 validation including the explicit rule that active same-version reinstall with 3 active profiles and 0 blockers must not trigger live reset.
 - Windows build run `36947870281` passed installer build, payload validation, smoke tests and direct prerelease publication.
 - Retained GitHub Actions artifacts for run `36947870281`: none.
@@ -63,3 +63,8 @@ Updated: 2026-10-02 04:42 MSK
 - Current main explicitly re-enumerates the assigned release response before prerelease filtering, so assets remain scoped to the selected single release.
 - Validation run `36951995805` passed against the live Network Recorder repository with both 1.6.0 and 1.7.0 prereleases.
 - Installer build run `36952046332` passed payload validation, live latest-prerelease resolution, install/reinstall/uninstall smoke tests and release publication.
+
+- Owner runtime test of preview.37 updating Network Recorder to 1.7.0 exposed a UX/performance defect: a normal in-place update still waited on asynchronous Yandex profile metadata; when that secondary observation did not confirm quickly, ExtensionInstaller displayed a misleading warning and automatically launched `browser://tune` plus Explorer, creating an unwanted browser window.
+- Preview.39 fixes the model rather than extending timeouts: ordinary install/update/active reinstall completes after the verified CRX/state/registry write and does not poll browser profile metadata; it never opens Yandex Browser or Explorer as fallback. Browser post-registration confirmation remains only for genuine live-reset recovery after an external-uninstall state.
+- Validation run `36953116197` passed PowerShell 5.1 release-engine validation and live Network Recorder prerelease resolution.
+- Build run `36953171855` passed installer build, payload validation, install/reinstall/uninstall smoke tests and prerelease publication; retained Actions artifacts: none.
