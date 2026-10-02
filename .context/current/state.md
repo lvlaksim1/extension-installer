@@ -1,6 +1,6 @@
 # Current state
 
-Updated: 2026-10-02 02:50 MSK
+Updated: 2026-10-02 03:01 MSK
 
 - Repository: `lvlaksim1/extension-installer`.
 - Visibility: public.
@@ -35,12 +35,15 @@ Updated: 2026-10-02 02:50 MSK
 - Preview.22 introduced no-restart live registry re-registration, but a user-removed external extension may still be rejected by the running browser because the browser owns a persisted user-removal decision. Preview.24 therefore keeps the hot registry path first, then falls back to a browser-owned no-restart activation path: it opens `browser://tune` in the already-running Yandex Browser and selects the exact verified managed CRX in Explorer for normal user confirmation. It does not silently edit browser Preferences while Yandex is running.
 - True foreign registrations remain protected from takeover/removal.
 - Windows validation run `36942756644` passed PowerShell 5.1 parsing, browser-state helpers, external-uninstall handling, live registry re-registration logic and published Network Recorder release verification.
-- Current verified installer preview: `4.0.0-preview.24`.
-- Release tag: `installer-preview-24`.
-- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.24.exe`.
-- Setup SHA-256: `36f28f2e2bb814b0c7cf77c45b73f0f74cb3dda105bb60a04fb0f2571652e140`.
-- Windows build run `36942832970` passed installer build, payload validation, install/reinstall/uninstall smoke tests and direct prerelease publication.
-- Retained GitHub Actions artifacts for run `36942832970`: none.
+- Owner-side preview.24 test exposed another state-model defect: after uninstall through ExtensionInstaller while Yandex Browser remained running, the external registry/state was removed immediately but the browser profile retained the same Extension ID; the next refresh misclassified that residual browser-only state as foreign and disabled reinstall.
+- Preview.26 fixes this in two layers: uninstall persists `ownership.json` before deleting managed CRX/state, and a browser-profile-only instance with the trusted catalog Extension ID is modeled as `BrowserOnly` rather than a foreign external registration. This also repairs the already-existing preview.24 broken state because it does not require a pre-existing ownership marker to re-enable install.
+- Current verified installer preview: `4.0.0-preview.26`.
+- Release tag: `installer-preview-26`.
+- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.26.exe`.
+- Setup SHA-256: `5eaf625998a2640d18b0f108e51151f58c6c1d8a9846cbb58947716a8328cfdf`.
+- Windows validation run `36943693207` passed including durable ownership-marker round-trip.
+- Windows build run `36943747512` passed installer build, payload validation, install/reinstall/uninstall smoke tests and direct prerelease publication.
+- Retained GitHub Actions artifacts for run `36943747512`: none.
 - Stable ExtensionInstaller publication has not been designated.
-- Preview.24 supersedes preview.22 because it preserves hot registration but adds a no-restart browser-owned activation fallback for the specific case where the extension was previously removed through Yandex Browser or the live registry event is not accepted.
-- Next external gate: owner installs preview 4.0.0-preview.24 while keeping Yandex Browser open, applies/reinstalls Network Recorder, and verifies either immediate hot load or the automatic `browser://tune` + selected-CRX fallback without restarting the browser.
+- Preview.26 supersedes preview.24 because it preserves the no-restart activation fallback and fixes post-uninstall ownership/state classification.
+- Next external gate: owner installs preview 4.0.0-preview.26 over preview.24, presses `Проверить` in the already-broken browser-only state, confirms reinstall is enabled, then tests uninstall -> check -> reinstall without restarting Yandex Browser.
