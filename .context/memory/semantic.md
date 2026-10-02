@@ -135,3 +135,13 @@ When capture archives become unexpectedly large, do not infer the cause from one
 - source: v1.7.0 implementation + successful signed build
 - authority: verified-repository + verified-ci
 - status: active
+
+## SM-016 — normal update must not wait on asynchronous profile convergence
+
+For an ordinary managed install, version update, or active same-version reinstall, the verified CRX copy, durable installer state, and in-place Yandex external-registration write are the synchronous installer transaction. Yandex profile metadata is asynchronous and can lag; polling it on the critical path caused unnecessary delay and false “not confirmed” warnings.
+
+Current rule: normal paths do not wait for profile convergence and do not automatically open `browser://tune` or Explorer. Post-registration browser acknowledgement is reserved for genuine live-reset recovery after an explicit external-uninstall state.
+
+- source: owner runtime observation + preview.39 implementation/CI
+- authority: owner-runtime-evidence + verified-repository + verified-ci
+- status: active
