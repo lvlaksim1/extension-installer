@@ -1,6 +1,6 @@
 # Current state
 
-Updated: 2026-10-02 04:32 MSK
+Updated: 2026-10-02 04:42 MSK
 
 - Repository: `lvlaksim1/extension-installer`.
 - Visibility: public.
@@ -48,13 +48,18 @@ Updated: 2026-10-02 04:32 MSK
 - Current `main` preserves v3.0.2 in-place registration for normal install/update, but adds a browser-owned recovery handshake for explicit uninstall/same-value reinstall: if Yandex still remembers the extension as externally uninstalled (including persisted state=2), ExtensionInstaller removes its registry key, waits up to 15 seconds for Yandex's live registry watcher to clear the old profile/killbit, and only then re-registers the exact verified CRX. It then waits up to 10 seconds for a non-uninstalled profile state before reporting live success.
 - Owner-side preview.33 test confirmed real install and uninstall now work in the already-running Yandex Browser. Two residual defects remained: successful install brought Yandex to foreground above ExtensionInstaller/dialogs, and `Переустановить` incorrectly forced live reset for an already active same-version install, timing out with `профилей: 3; блокировок: 0`.
 - Preview.35 fixes both: active same-version installs with active browser profiles no longer enter destructive/reset recovery, and ExtensionInstaller restores its own window to foreground before showing an owned modal result dialog.
-- Current verified installer preview: `4.0.0-preview.35`.
-- Release tag: `installer-preview-35`.
-- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.35.exe`.
-- Setup SHA-256: `a1c36d77dd3f02d378cf4930a011a2b36ba3782574d3d0c382755845488408cd`.
+- Current verified installer preview: `4.0.0-preview.37`.
+- Release tag: `installer-preview-37`.
+- Setup asset: `ExtensionInstaller_Setup_v4.0.0-preview.37.exe`.
+- Setup SHA-256: `55094465f755ec1e7b7e9ad41b5a66a5ce8c6449de274425c6e6339e323eacfe`.
 - Windows validation run `36947823138` passed PowerShell 5.1 validation including the explicit rule that active same-version reinstall with 3 active profiles and 0 blockers must not trigger live reset.
 - Windows build run `36947870281` passed installer build, payload validation, smoke tests and direct prerelease publication.
 - Retained GitHub Actions artifacts for run `36947870281`: none.
 - Stable ExtensionInstaller publication has not been designated.
 - Preview.35 supersedes preview.33 because it keeps the browser-acknowledged recovery only for genuinely blocked/missing-active-profile states, while normal active same-version reinstall stays on the v3.0.2 in-place path; result dialogs are now owned by the ExtensionInstaller window and the app is restored to foreground.
 - Next external gate: owner uses working ExtensionInstaller preview.35 to update Network Recorder from 1.6.0 to 1.7.0, records the same page for about 10 seconds with the new default lightweight settings, and compares ZIP size against the previous >100 MB result. Inspect `session-manifest.json -> archiveSizeBreakdown` if still unexpectedly large.
+
+- Owner screenshot after publishing Network Recorder 1.7.0 exposed a prerelease resolver defect in ExtensionInstaller preview.35: Windows PowerShell 5.1 treated the GitHub releases top-level JSON array as one Object[] pipeline item; member enumeration then merged assets from both 1.6.0 and 1.7.0 prereleases, causing the false error "В GitHub Release найдено несколько assets с именем: extension-release.json".
+- Current main explicitly re-enumerates the assigned release response before prerelease filtering, so assets remain scoped to the selected single release.
+- Validation run `36951995805` passed against the live Network Recorder repository with both 1.6.0 and 1.7.0 prereleases.
+- Installer build run `36952046332` passed payload validation, live latest-prerelease resolution, install/reinstall/uninstall smoke tests and release publication.
