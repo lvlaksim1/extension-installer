@@ -1,6 +1,6 @@
 # Latest handoff
 
-Updated: 2026-10-02 04:42 MSK
+Updated: 2026-10-02 04:56 MSK
 
 ## Manager
 
@@ -42,14 +42,15 @@ Root cause and correction:
 
 ## Current installer preview
 
-- version: `4.0.0-preview.37`
-- tag: `installer-preview-37`
-- asset: `ExtensionInstaller_Setup_v4.0.0-preview.37.exe`
-- SHA-256: `55094465f755ec1e7b7e9ad41b5a66a5ce8c6449de274425c6e6339e323eacfe`
-- release-engine validation run: `36951995805` — success
-- build run: `36952046332` — success
+- version: `4.0.0-preview.39`
+- tag: `installer-preview-39`
+- asset: `ExtensionInstaller_Setup_v4.0.0-preview.39.exe`
+- SHA-256: `09d8188650a617ec2e725ad633a9344269740dcc3641fd2343c5deca25a79115`
+- release-engine validation run: `36953116197` — success
+- build run: `36953171855` — success
 - retained Actions artifacts: none
-- preview.37 fixes Windows PowerShell 5.1 top-level GitHub releases-array enumeration. With multiple prereleases present, preview.35 could merge assets from several releases and falsely report duplicate `extension-release.json` assets. preview.37 scopes assets to the selected latest prerelease only.
+- preview.39 removes the false post-update browser-confirmation gate from normal install/update/active reinstall. Those paths now stop after verified CRX/state/registry writes and never auto-open `browser://tune` or Explorer.
+- browser profile polling remains only for genuine live-reset recovery after external-uninstall state, where browser acknowledgement is actually meaningful.
 
 ## Network Recorder
 
@@ -68,6 +69,6 @@ Root cause and correction:
 
 ## Resume point
 
-Owner installs preview.37 over preview.35, presses `Проверить`, verifies Network Recorder 1.7.0 resolves without the duplicate-asset error, updates it, then repeats the ~10-second size test with default lightweight options.
+Owner installs preview.39 over preview.37 and performs one active same-version Network Recorder reinstall. Expected: prompt completion, no new browser/Explorer window, and a simple success result. Then resume the ~10-second Network Recorder archive-size test.
 
-Stable publication remains gated on real install/update verification and explicit owner approval.
+Stable publication remains gated on real owner verification and explicit owner approval.
