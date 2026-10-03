@@ -9,6 +9,8 @@ For Windows PowerShell scripts with non-ASCII UI text:
 
 This was required for the clean ExtensionInstaller GUI/release engine.
 
+- source: legacy-v2-state
+- authority: legacy-unverified
 ## PM-002 — verify upgrade cleanup, not only fresh install
 
 When replacing an old architecture under the same fixed installer AppId:
@@ -17,18 +19,26 @@ When replacing an old architecture under the same fixed installer AppId:
 - assert obsolete files are removed;
 - then continue reinstall/uninstall smoke tests.
 
+- source: legacy-v2-state
+- authority: legacy-unverified
 ## PM-003 — use authenticated GitHub API only in CI when available
 
 The installed application should work against public releases without a user token. CI may hit shared-IP API rate limits, so the release engine accepts an optional environment token for CI validation while keeping normal user operation token-free.
 
+- source: legacy-v2-state
+- authority: legacy-unverified
 ## PM-004 — validate extension releases independently
 
 Do not trust the extension signing workflow alone. After publication, ExtensionInstaller should independently download the actual Release assets and verify descriptor fields, SHA-256, CRX3 signature, and CRX-derived Extension ID against the catalog trust anchor.
 
+- source: legacy-v2-state
+- authority: legacy-unverified
 ## PM-005 — avoid retained Actions artifacts
 
 For distributable outputs, publish directly to GitHub Releases. Use ephemeral runner storage for intermediate files and verify the workflow leaves no retained Actions artifacts.
 
+- source: legacy-v2-state
+- authority: legacy-unverified
 ## PM-006 — test external-extension state as a multi-source state machine
 
 Do not equate `HKCU\Software\Yandex\YandexBrowser\Extensions\<id>` with “installed”.
@@ -43,6 +53,11 @@ For migration/reinstall tests cover at least:
 
 Do not use stale profile directories as proof of installation. Prefer `extensions.settings` from `Secure Preferences`/`Preferences`. When Yandex is running, do not edit its Preferences file; use the live registry-watcher path via a two-phase owned-key remove/recreate. When Yandex is closed, a persisted target uninstall marker may be edited with byte-level backup/rollback.
 
+- source: legacy-v2-state
+- authority: legacy-unverified
 ## PM-007 — avoid replacement-string metacharacter corruption when generating source
 
 When programmatically inserting source with JavaScript `String.replace`, use a replacement callback rather than a raw replacement string if inserted text can contain JavaScript replacement tokens such as `$'`. The initial browser-state patch was corrupted by such replacement semantics and was caught by the Windows PowerShell 5.1 validation run before release.
+
+- source: legacy-v2-state
+- authority: legacy-unverified
